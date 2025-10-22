@@ -26,10 +26,22 @@ class Taller:
         """)
 
         cursor.excute("""
-        CREATE TABLE IF NOT EXISTS APARATOS(
-        
-        
-        
+        CREATE TABLE IF NOT EXISTS aparatos(
+            no INTEGER PRIMARY KEY AUTOINCREMENT,
+            tipo TEXT,
+            marca TEXT,
+            modelo TEXT,
+            falla TEXT,
+            cliente TEXT
+        )
+        """)
+
+        cursor.excute("""
+        CREATE TABLE IF NOT EXISTS cliente(
+            nit INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT,
+            celular TEXT,
+            direccion TEXT
         )
         """)
 
