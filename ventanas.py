@@ -248,6 +248,9 @@ class BuscarHistorial:
         canvas.create_window(400, 100, window=titulo)
         referencia = tk.Entry(self.buscar, font=("Arial", 12, "bold"))
         canvas.create_window(200, 200, window=referencia)
+        buscar_B = tk.Button(self.buscar, text="BUSCAR", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
+        canvas.create_window(450, 175, window=buscar_B)
+        limpiar_B = tk.Button(self.buscar, text="LIMPIAR ")
 
 
 

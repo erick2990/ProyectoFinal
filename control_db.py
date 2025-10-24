@@ -54,7 +54,7 @@ class Taller:
         """)
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS registros_entradas(
-            registro INTEGER PRIMARY KEY AUTOINCREMENT,
+            registro_entrada INTEGER PRIMARY KEY AUTOINCREMENT,
             no_aparato INTEGER,
             id_trabajador INTEGER,
             cliente_nit INTEGER
@@ -64,5 +64,49 @@ class Taller:
             FOREIGN KEY(cliente_nit) REFERENCES cliente(nit)
         )
         """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS registros_salidas(
+            registro_salida INTEGER PRIMARY KEY AUTOINCREMENT,
+            no_aparato INTEGER,
+            no_registro_entrada INTEGER,
+            id_trabajador INTEGER,
+            total REAL,
+            FOREIGN KEY(no_aparato) REFERENCES aparatos(no)
+            FOREIGN KEY(no_registro) REFERENCES registros_entradas(registro_entrada) 
+        )   
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS movimiento_bodega(
+            registro_bodega INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_trabajador INTEGER,
+            fecha TEXT,
+            aparato TEXT,
+            modelo TEXT,
+            FOREIGN KEY(id_trabajador) REFERENCES usuarios(id)
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS detalle_trabajos(
+            no_registro_entrada INTEGER 
+            no_registros_salida INTEGER 
+            total_cobrado INTEGER
+            FOREIGN KEY(no_registro_entrada) REFERENCES registros_entradas
+            FOREIGN KEY(no_registro_salida) REFERENCES registros_salidas
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS detalle_historial(
+            no_registro INTEGER,
+            nit_cliente INTEGER,
+            total INTEGER,
+            FOREIGN KEY(total) REFERENCES detalle_trabajos(total_cobrado)
+        )
+        """)
+
+
 
 
