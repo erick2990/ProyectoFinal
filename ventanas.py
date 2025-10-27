@@ -84,12 +84,10 @@ class SubTrabajador:
         canvas.create_window(100, 200, window = registrar_aparatoB)
         cotizar_B = tk.Button(self.sub, text="COTIZACIÓN DE\nREPARACIÓN", font=("Arial", 14, "bold"), command=lambda:Cotizacion(self.sub),highlightthickness=3, highlightbackground="blue4")
         canvas.create_window(400, 200 , window=cotizar_B)
-        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4")
+        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES", font=("Arial", 14, "bold"),command=lambda:BuscarHistorial(self.sub) ,highlightthickness=3, highlightbackground="blue4")
         canvas.create_window(685,200, window=consulta_B)
-        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=10, height=2)
-        canvas.create_window(100, 300, window=bodega_B)
-        buscar_B = tk.Button(self.sub, text="BUSCAR EN\nHISTORIAL", font=("Arial", 14, "bold"),command=lambda:BuscarHistorial(self.sub), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(400, 300, window=buscar_B)
+        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=lambda:Bodega(self.sub), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        canvas.create_window(400, 300, window=bodega_B)
         cerrar_B = tk.Button(self.sub, text="CERRAR SESIÓN", font=("Arial", 14, "bold"),command=self.cerrar_sesion, highlightthickness="3", highlightbackground="blue4", width=15, height=2)
         canvas.create_window(400, 500, window=cerrar_B)
 
@@ -109,12 +107,14 @@ class SubAdmin:
         canvas.create_window(100, 200, window=trabajadores_B)
         estadisticas_B = tk.Button(self.sub, text="ESTADISTICAS", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
         canvas.create_window(400, 200, window=estadisticas_B)
-        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES" ,font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES" ,font=("Arial", 14, "bold"), command=lambda:BuscarHistorial(self.sub), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
         canvas.create_window(700, 200, window=consulta_B)
-        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=lambda:Bodega(self.sub), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
         canvas.create_window(100, 300, window=bodega_B)
         clientes_B = tk.Button(self.sub, text="CLIENTES", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
         canvas.create_window(400, 300, window=clientes_B)
+        cobros_B = tk.Button(self.sub, text="Historial\nCobros", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        canvas.create_window(700, 300, window=cobros_B)
         cerrar_B = tk.Button(self.sub, text="Cerrar Sesión", font=("Arial",14,"bold"), command=self.cerrar_sesion, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
         canvas.create_window(400, 500, window=cerrar_B)
 
@@ -247,10 +247,57 @@ class BuscarHistorial:
         titulo = tk.Label(self.buscar, text="BÚSQUEDA POR NO. DE REFERENCIA:",font=("Arial", 12, "bold"),  width=50, height=2)
         canvas.create_window(400, 100, window=titulo)
         referencia = tk.Entry(self.buscar, font=("Arial", 12, "bold"))
-        canvas.create_window(200, 200, window=referencia)
+        canvas.create_window(300, 200, window=referencia)
         buscar_B = tk.Button(self.buscar, text="BUSCAR", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
-        canvas.create_window(450, 175, window=buscar_B)
-        limpiar_B = tk.Button(self.buscar, text="LIMPIAR ")
+        canvas.create_window(500, 175, window=buscar_B)
+        limpiar_B = tk.Button(self.buscar, text="LIMPIAR ", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
+        canvas.create_window(500, 225, window=limpiar_B)
+        canvas.create_rectangle(100, 275, 700,500, fill="white", outline="black")
+        canvas.create_text(200, 300, text="DATOS CLIENTE:", font=("Arial", 12, "bold"))
+        canvas.create_text(550, 300, text="FECHA: ", font=("Arial", 12, "bold"))
+        canvas.create_text(205, 350, text="DATOS APARATO: ", font=("Arial", 12, "bold"))
+        canvas.create_text(550, 400, text="ESTADO: ", font=("Arial", 12, "bold"))
+        canvas.create_text(200, 400, text="ATENDIDO POR:", font=("Arial", 12, "bold"))
+        canvas.create_text(550, 450, text="TOTAL: ", font=("Arial",12, "bold"))
+        cancelar_B = tk.Button(self.buscar, text="CANCELAR", font=("Arial", 12, "bold"), command= self.cancelar,bg="gray20", fg="white")
+        canvas.create_window(590, 575, window=cancelar_B)
+        aceptar_B = tk.Button(self.buscar, text="ACEPTAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
+        canvas.create_window(730, 575, window=aceptar_B)
+
+
+    def cancelar(self):
+        self.buscar.destroy()
+
+class Bodega:
+    def __init__(self, master):
+        self.bodega = tk.Toplevel(master)
+        self.bodega.title("BODEGA")
+        self.bodega.geometry("800x600")
+        canvas = tk.Canvas(self.bodega, width=800, height=600)
+        canvas.pack(fill="both", expand=True)
+        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        modelo_entrada = tk.Entry(self.bodega, font=("Arial", 14, "bold"))
+        canvas.create_window(300,50, window=modelo_entrada)
+        aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
+        tipo_aparato = tk.StringVar()  # Aqui se guardara que tipo de aparato selecciono el usuario
+        aparato_entrada = tk.OptionMenu(self.bodega, tipo_aparato, *aparatos_validos)
+        canvas.create_window(300, 100, window=aparato_entrada)
+        buscar_B = tk.Button(self.bodega, text="BUSCAR" ,font=("Arial", 12, "bold"), bg="Slategray4", fg="black" ,width=15, height=2)
+        canvas.create_window(600, 75, window=buscar_B)
+        canvas.create_rectangle(50,150, 750, 550, fill="white" )
+
+
+
+        cancelar_B = tk.Button(self.bodega, text="CANCELAR", font=("Arial", 12, "bold"), command=self.cancelar,bg="gray20", fg="white")
+        canvas.create_window(590, 575, window=cancelar_B)
+        aceptar_B = tk.Button(self.bodega, text="ACEPTAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
+        canvas.create_window(730, 575, window=aceptar_B)
+
+    def cancelar(self):
+        self.bodega.destroy()
+
+
+
 
 
 
