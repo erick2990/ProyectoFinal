@@ -26,7 +26,7 @@ class Taller:
         )    
         """)
         cursor.execute("""
-        CREATE TABLE IF NOT EXISTS cliente(
+        CREATE TABLE IF NOT EXISTS clientes(
             nit INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT,
             celular TEXT,
