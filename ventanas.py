@@ -1,6 +1,7 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 from datetime import date
+from tkinter import messagebox
 
 from cloudinit.util import center
 from oauthlib.uri_validate import hier_part
@@ -19,7 +20,6 @@ class Login:
         self.root = tk.Tk()
         self.root.title("TALLER ELECTRÓNICO")
         self.root.geometry("800x600") #Se creo la ventana root
-
         canvas = tk.Canvas(self.root, width=800, height=600, highlightthickness=0) #Se añade un canva a la ventana root
         canvas.pack(fill="both", expand=True) #Se coloca
         fondo = Image.open("/home/erick/Documentos/ProyectoFinal/util/fondo.png") #abrir fondo
@@ -58,85 +58,174 @@ class Login:
         usuario = self.ingreso_usuario.get()
         contra = self.ingreso_contra.get()
         # Simulación de validación
+        if not usuario or not contra:
+            tk.messagebox.showwarning("Campos vacíos", "Por favor, completa todos los campos antes de continuar.")
+            return
         if usuario == "admin" and contra == "1234":
             self.root.withdraw()
-            SubAdmin(self.root)
+            SubAdmin(self.root, self)
         elif usuario == "erick" and contra == "1234":
             self.root.withdraw()
-            SubTrabajador(self.root)
+            SubTrabajador(self.root, self)
         else:
             tk.messagebox.showerror("Error", "Credenciales incorrectas")
+            self.ingreso_usuario.delete(0, tk.END)
+            self.ingreso_contra.delete(0, tk.END)
 
     def run(self):
         self.root.mainloop()
 
-
 class SubTrabajador:
 
-    def __init__(self, master):
+    def __init__(self, master, login_ref):
+        self.login_ref = login_ref
         self.sub = tk.Toplevel(master)
         self.sub.title("TRABAJADOR")
         self.sub.geometry("800x600")
-        canvas  = tk.Canvas(self.sub, width=800, height=600)
-        canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        registrar_aparatoB = tk.Button(self.sub, text="REGISTRAR\nAPARATO", font=("Arial", 14, "bold"), command=lambda:AgregarAparato(self.sub), highlightthickness=3, highlightbackground="blue4")
-        canvas.create_window(100, 200, window = registrar_aparatoB)
-        cotizar_B = tk.Button(self.sub, text="COTIZACIÓN DE\nREPARACIÓN", font=("Arial", 14, "bold"), command=lambda:Cotizacion(self.sub),highlightthickness=3, highlightbackground="blue4")
-        canvas.create_window(400, 200 , window=cotizar_B)
-        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES", font=("Arial", 14, "bold"),command=lambda:BuscarHistorial(self.sub) ,highlightthickness=3, highlightbackground="blue4")
-        canvas.create_window(685,200, window=consulta_B)
-        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=lambda:Bodega(self.sub), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(400, 300, window=bodega_B)
+        self.canvas  = tk.Canvas(self.sub, width=800, height=600)
+        self.canvas.pack(fill="both", expand=True)
+        aplicar_logo(self.canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        self.contenido = tk.Frame(self.sub, width=800, height=600)
+        self.contenido.pack_forget() #ocultar al inicio
+
+        self.frames = {}
+        self.crear_frames()
+        registrar_aparatoB = tk.Button(self.sub, text="REGISTRAR\nAPARATO", font=("Arial", 14, "bold"), command=self.mostrar_aparato, highlightthickness=3, highlightbackground="blue4")
+        self.canvas.create_window(100, 200, window = registrar_aparatoB)
+        cotizar_B = tk.Button(self.sub, text="COTIZACIÓN DE\nREPARACIÓN", font=("Arial", 14, "bold"), command=self.mostrar_cotizacion,highlightthickness=3, highlightbackground="blue4")
+        self.canvas.create_window(400, 200 , window=cotizar_B)
+        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES", font=("Arial", 14, "bold"),command=self.mostrar_historial,highlightthickness=3, highlightbackground="blue4")
+        self.canvas.create_window(685,200, window=consulta_B)
+        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        self.canvas.create_window(400, 300, window=bodega_B)
         cerrar_B = tk.Button(self.sub, text="CERRAR SESIÓN", font=("Arial", 14, "bold"),command=self.cerrar_sesion, highlightthickness="3", highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(400, 500, window=cerrar_B)
+        self.canvas.create_window(400, 500, window=cerrar_B)
+
+    def crear_frames(self):
+        # Aquí defines los frames como si fueran pantallas
+        self.frames["aparato"] = AgregarAparato(self.contenido, self)
+        self.frames["cotizacion"] = Cotizacion(self.contenido, self)
+        self.frames["historial"] = BuscarHistorial(self.contenido, self)
+        self.frames["bodega"] = Bodega(self.contenido, self)
+
+    def mostrar_frame(self, nombre):
+        self.canvas.pack_forget() #oculta el canvas
+        self.contenido.pack(fill="both", expand=True)
+        for frame in self.frames.values():
+            frame.pack_forget()
+        self.frames[nombre].pack(fill="both", expand=True)
+
+    def volver_menu(self):
+        self.contenido.pack_forget()
+        for frame in self.frames.values():
+            frame.pack_forget()
+        self.canvas.pack(fill="both", expand=True) #vuelve a mostrar el submenu Cambio para que reaparezca
+
+    def mostrar_aparato(self):
+        self.mostrar_frame("aparato")
+
+    def mostrar_cotizacion(self):
+        self.mostrar_frame("cotizacion")
+
+    def mostrar_historial(self):
+        self.mostrar_frame("historial")
+
+    def mostrar_bodega(self):
+        self.mostrar_frame("bodega")
 
     def cerrar_sesion(self):
         self.sub.destroy()
         self.sub.master.deiconify()
+        if hasattr(self.login_ref, "ingreso_usuario") and hasattr(self.login_ref, "ingreso_contra"):
+            self.login_ref.ingreso_usuario.delete(0, tk.END)
+            self.login_ref.ingreso_contra.delete(0, tk.END)
 
 class SubAdmin:
-    def __init__(self, master):
+    def __init__(self, master, login_ref):
+        self.login_ref = login_ref
         self.sub = tk.Toplevel(master)
         self.sub.title("Administrador")
         self.sub.geometry("800x600")
-        canvas = tk.Canvas(self.sub, width=800, height=600)
-        canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        self.canvas = tk.Canvas(self.sub, width=800, height=600)
+        self.canvas.pack(fill="both", expand=True)
+        aplicar_logo(self.canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        self.contenido = tk.Frame(self.sub, width=800, height=600)
+        self.contenido.pack_forget()
+
+        self.frames = {} #Se crea un diccionario de frames para ser invocados
+        self.crear_frame() #Se llama a la funcion de crear frames
+
         trabajadores_B = tk.Button(self.sub, text="TRABAJADORES", font=("Arial",14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(100, 200, window=trabajadores_B)
+        self.canvas.create_window(100, 200, window=trabajadores_B)
         estadisticas_B = tk.Button(self.sub, text="ESTADISTICAS", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(400, 200, window=estadisticas_B)
-        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES" ,font=("Arial", 14, "bold"), command=lambda:BuscarHistorial(self.sub), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(700, 200, window=consulta_B)
-        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=lambda:Bodega(self.sub), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(100, 300, window=bodega_B)
+        self.canvas.create_window(400, 200, window=estadisticas_B)
+        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES" ,font=("Arial", 14, "bold"), command=self.mostrar_historial, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        self.canvas.create_window(700, 200, window=consulta_B)
+        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        self.canvas.create_window(100, 300, window=bodega_B)
         clientes_B = tk.Button(self.sub, text="CLIENTES", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(400, 300, window=clientes_B)
+        self.canvas.create_window(400, 300, window=clientes_B)
         cobros_B = tk.Button(self.sub, text="Historial\nCobros", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(700, 300, window=cobros_B)
+        self.canvas.create_window(700, 300, window=cobros_B)
         cerrar_B = tk.Button(self.sub, text="Cerrar Sesión", font=("Arial",14,"bold"), command=self.cerrar_sesion, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
-        canvas.create_window(400, 500, window=cerrar_B)
+        self.canvas.create_window(400, 500, window=cerrar_B)
+
+    def crear_frame(self):
+        #self.frames["trabajador"] = aqui el codigo para trabajador
+        #self.frames["estadisticas"] = aqui el codigo para estadistica
+        self.frames["historial"] = BuscarHistorial(self.contenido, self)
+        self.frames["bodega"] = Bodega(self.contenido, self)
+        #self.frames["clientes"] = Clientes(self.contenido, self)
+        #self.frames["cobros"] = Clientes(self.contenido, self)
+
+    def mostrar_frame(self, nombre):
+        self.canvas.pack_forget()
+        self.contenido.pack(fill="both", expand=True)
+        for frame in self.frames.values():
+            frame.pack_forget()
+        self.frames[nombre].pack(fill="both", expand=True)
+
+    def mostrar_trabajador(self):
+        self.mostrar_frame("trabajador")
+    def mostrar_estadistica(self):
+        self.mostrar_frame("estadisticas")
+    def mostrar_historial(self):
+        self.mostrar_frame("historial")
+    def mostrar_bodega(self):
+        self.mostrar_frame("bodega")
+    def mostrar_clientes(self):
+        self.mostrar_frame("clientes")
+    def mostrar_cobros(self):
+        self.mostrar_frame("cobros")
+
+    def volver_menu(self):
+        self.contenido.pack_forget()
+        for frame in self.frames.values():
+            frame.pack_forget()
+        self.canvas.pack(fill="both", expand=True) #vuelve a mostrar el submenu
 
     def cerrar_sesion(self):
         self.sub.destroy()
         self.sub.master.deiconify()
+        if hasattr(self.login_ref, "ingreso_usuario") and hasattr(self.login_ref, "ingreso_contra"):
+            self.login_ref.ingreso_usuario.delete(0, tk.END)
+            self.login_ref.ingreso_contra.delete(0, tk.END)
 
-class AgregarAparato:
-    def __init__(self, master):
-        self.agregar = tk.Toplevel(master)
-        self.agregar.title("AGREGAR APARATO")
-        self.agregar.geometry("800x600")
-        canvas = tk.Canvas(self.agregar, width=800, height=600)
+class AgregarAparato(tk.Frame):
+    def __init__(self, master, ref_sub):
+        super().__init__(master, width=800, height=600)
+        self.ref_sub = ref_sub
+        self.pack_propagate(False)
+        canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        dato_etiqueta = tk.Label(self.agregar, text="DATOS CLIENTE: ", font=("Arial", 14, "bold"), width=20, height=2)
+        dato_etiqueta = tk.Label(self, text="DATOS CLIENTE: ", font=("Arial", 14, "bold"), width=20, height=2)
         canvas.create_window(100, 100, window=dato_etiqueta)
-        detalles_etiqueta = tk.Label(self.agregar, text=" DETALLES APARATO: ", font=("Arial", 14, "bold"), width=20, height=2)
+        detalles_etiqueta = tk.Label(self, text=" DETALLES APARATO: ", font=("Arial", 14, "bold"), width=20, height=2)
         canvas.create_window(100,350, window=detalles_etiqueta)
-        fecha_etiqueta = tk.Label(self.agregar, text=f"{fecha.strftime("%d/%m/%y")}", font=("Arial", 12, "bold"), bg="white",width=10, height=2)
+        fecha_etiqueta = tk.Label(self, text=f"{fecha.strftime("%d/%m/%y")}", font=("Arial", 12, "bold"), bg="white",width=10, height=2)
         canvas.create_window(600, 50, window=fecha_etiqueta)
-        caso_etiqueta = tk.Label(self.agregar, text="No. 0000", font=("Arial", 12, "bold"), bg="white", width=10, height=2)
+        caso_etiqueta = tk.Label(self, text="No. 0000", font=("Arial", 12, "bold"), bg="white", width=10, height=2)
         canvas.create_window(700, 50, window=caso_etiqueta)
         canvas.create_text(50, 150, text="NIT:", font=("Arial", 14, "italic"), fill="white")
         canvas.create_text(200, 150, text="NOMBRE: ", font=("Arial", 14, "italic"), fill="white")
@@ -147,53 +236,50 @@ class AgregarAparato:
         canvas.create_text(600, 400, text="TIPO DE APARATO: ", font=("Arial", 14, "italic"), fill="white")
         canvas.create_text(80, 500, text="FALLA: ", font=("Arial", 14, "italic"), fill="white")
         canvas.create_text(400, 500, text="SUBTOTAL: ", font=("Arial", 14, "bold"), fill="white")
-        nit = tk.Entry(self.agregar, font=("Arial", 12), bg="white",fg="black" ,width=12)
+        nit = tk.Entry(self, font=("Arial", 12), bg="white",fg="black" ,width=12)
         canvas.create_window(60, 175, window=nit)
-        nombre = tk.Entry(self.agregar, font=("Arial", 12), bg="white", fg="black", width=40)
+        nombre = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=40)
         canvas.create_window(340, 175, window=nombre)
-        celular = tk.Entry(self.agregar, font=("Arial", 12), bg="white", fg="black", width=20)
+        celular = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
         canvas.create_window(630, 175, window=celular)
-        direccion = tk.Entry(self.agregar, font=("Arial", 12), bg="white", fg="black", width=30)
+        direccion = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=30)
         canvas.create_window(60, 300, window=direccion)
-        marca = tk.Entry(self.agregar, font=("Arial", 12), bg="white", fg="black", width=20)
+        marca = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
         canvas.create_window(80, 450, window=marca)
-        modelo = tk.Entry(self.agregar, font=("Arial", 12), bg="white", fg="black", width=15)
+        modelo = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
         canvas.create_window(280, 450, window=modelo)
-        falla = tk.Entry(self.agregar, font=("Arial", 12), bg="white", fg="black", width=15)
+        falla = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
         canvas.create_window(100, 550, window=falla)
         aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
         tipo_aparato = tk.StringVar() #Aqui se guardara que tipo de aparato selecciono el usuario
-        listado_aparatos = tk.OptionMenu(self.agregar, tipo_aparato, *aparatos_validos)
+        listado_aparatos = tk.OptionMenu(self, tipo_aparato, *aparatos_validos)
         canvas.create_window(600, 450, window=listado_aparatos)
-        subTotal = tk.Label(self.agregar, text="Q.0", font=("Arial",12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
+        subTotal = tk.Label(self, text="Q.0", font=("Arial",12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
         canvas.create_window(400, 550, window=subTotal)
-        cancelar_B = tk.Button(self.agregar, text="CANCELAR",font=("Arial", 12, "bold"), command= self.cancelar, bg="gray20", fg="white")
+        cancelar_B = tk.Button(self, text="CANCELAR",font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
         canvas.create_window(600, 575, window=cancelar_B)
-        aceptar_B = tk.Button(self.agregar, text="ACEPTAR", font=("Arial", 12, "bold"),command=self.aceptar ,bg="gray20", fg="white")
+        aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"),command=self.aceptar ,bg="gray20", fg="white")
         canvas.create_window(725, 575, window=aceptar_B)
-
-    def cancelar(self):
-        self.agregar.destroy()
 
     def aceptar(self):
         #Aqui el codigo que se ejecuta para guardar los datos
         pass
 
-class Cotizacion:
-    def __init__(self, master):
-        self.coti = tk.Toplevel(master)
-        self.coti.title("COTIZACIÓN DE REPARACIÓN")
-        self.coti.geometry("800x600")
-        canvas = tk.Canvas(self.coti, width=800, height=600)
+class Cotizacion(tk.Frame):
+    def __init__(self, master, ref_sub):
+        super().__init__(master, width=800, height=600)
+        self.ref_sub = ref_sub
+        self.pack_propagate(False)
+        canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        dato_etiqueta = tk.Label(self.coti, text="DATOS CLIENTE: ", font=("Arial", 14, "bold"), width=20, height=2)
+        dato_etiqueta = tk.Label(self, text="DATOS CLIENTE: ", font=("Arial", 14, "bold"), width=20, height=2)
         canvas.create_window(100, 100, window=dato_etiqueta)
-        detalles_etiqueta = tk.Label(self.coti, text=" DETALLES APARATO: ", font=("Arial", 14, "bold"), width=20, height=2)
+        detalles_etiqueta = tk.Label(self, text=" DETALLES APARATO: ", font=("Arial", 14, "bold"), width=20, height=2)
         canvas.create_window(100,350, window=detalles_etiqueta)
-        fecha_etiqueta = tk.Label(self.coti, text=f"{fecha.strftime("%d/%m/%y")}", font=("Arial", 12, "bold"), bg="white",width=10, height=2)
+        fecha_etiqueta = tk.Label(self, text=f"{fecha.strftime("%d/%m/%y")}", font=("Arial", 12, "bold"), bg="white",width=10, height=2)
         canvas.create_window(600, 50, window=fecha_etiqueta)
-        caso_etiqueta = tk.Label(self.coti, text="No. 0000", font=("Arial", 12, "bold"), bg="white", width=10, height=2)
+        caso_etiqueta = tk.Label(self, text="No. 0000", font=("Arial", 12, "bold"), bg="white", width=10, height=2)
         canvas.create_window(700, 50, window=caso_etiqueta)
         canvas.create_text(50, 150, text="NIT:", font=("Arial", 14, "italic"), fill="white")
         canvas.create_text(200, 150, text="NOMBRE: ", font=("Arial", 14, "italic"), fill="white")
@@ -204,53 +290,50 @@ class Cotizacion:
         canvas.create_text(600, 400, text="TIPO DE APARATO: ", font=("Arial", 14, "italic"), fill="white")
         canvas.create_text(80, 500, text="FALLA: ", font=("Arial", 14, "italic"), fill="white")
         canvas.create_text(400, 500, text="SUBTOTAL: ", font=("Arial", 14, "bold"), fill="white")
-        nit = tk.Entry(self.coti, font=("Arial", 12), bg="white",fg="black" ,width=12)
+        nit = tk.Entry(self, font=("Arial", 12), bg="white",fg="black" ,width=12)
         canvas.create_window(60, 175, window=nit)
-        nombre = tk.Entry(self.coti, font=("Arial", 12), bg="white", fg="black", width=40)
+        nombre = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=40)
         canvas.create_window(340, 175, window=nombre)
-        celular = tk.Entry(self.coti, font=("Arial", 12), bg="white", fg="black", width=20)
+        celular = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
         canvas.create_window(630, 175, window=celular)
-        direccion = tk.Entry(self.coti, font=("Arial", 12), bg="white", fg="black", width=30)
+        direccion = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=30)
         canvas.create_window(60, 300, window=direccion)
-        marca = tk.Entry(self.coti, font=("Arial", 12), bg="white", fg="black", width=20)
+        marca = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
         canvas.create_window(80, 450, window=marca)
-        modelo = tk.Entry(self.coti, font=("Arial", 12), bg="white", fg="black", width=15)
+        modelo = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
         canvas.create_window(280, 450, window=modelo)
-        falla = tk.Entry(self.coti, font=("Arial", 12), bg="white", fg="black", width=15)
+        falla = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
         canvas.create_window(100, 550, window=falla)
         aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
         tipo_aparato = tk.StringVar() #Aqui se guardara que tipo de aparato selecciono el usuario
-        listado_aparatos = tk.OptionMenu(self.coti, tipo_aparato, *aparatos_validos)
+        listado_aparatos = tk.OptionMenu(self, tipo_aparato, *aparatos_validos)
         canvas.create_window(600, 450, window=listado_aparatos)
-        subTotal = tk.Label(self.coti, text="Q.0", font=("Arial",12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
+        subTotal = tk.Label(self, text="Q.0", font=("Arial",12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
         canvas.create_window(400, 550, window=subTotal)
-        cancelar_B = tk.Button(self.coti, text="CANCELAR",font=("Arial", 12, "bold"), command= self.cancelar, bg="gray20", fg="white")
+        cancelar_B = tk.Button(self, text="CANCELAR",font=("Arial", 12, "bold"), command= self.ref_sub.volver_menu, bg="gray20", fg="white")
         canvas.create_window(590, 575, window=cancelar_B)
-        generar_pdf = tk.Button(self.coti, text="GENERAR PDF", font=("Arial", 12, "bold"),command=self.pdf ,bg="gray20", fg="white")
+        generar_pdf = tk.Button(self, text="GENERAR PDF", font=("Arial", 12, "bold"),command=self.pdf ,bg="gray20", fg="white")
         canvas.create_window(730, 575, window=generar_pdf)
-
-    def cancelar(self):
-        self.coti.destroy()
 
     def pdf(self):
         #Aqui el codigo que se ejecuta para guardar los datos
         pass
 
-class BuscarHistorial:
-    def __init__(self, master):
-        self.buscar = tk.Toplevel(master)
-        self.buscar.title("BUSCAR EN HISTORIAL")
-        self.buscar.geometry("800x600")
-        canvas = tk.Canvas(self.buscar, width=800, height=600)
+class BuscarHistorial(tk.Frame):
+    def __init__(self, master, ref_sub):
+        super().__init__(master, width=800, height=600)
+        self.ref_sub = ref_sub
+        self.pack_propagate(False)
+        canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        titulo = tk.Label(self.buscar, text="BÚSQUEDA POR NO. DE REFERENCIA:",font=("Arial", 12, "bold"),  width=50, height=2)
+        titulo = tk.Label(self, text="BÚSQUEDA POR NO. DE REFERENCIA:",font=("Arial", 12, "bold"),  width=50, height=2)
         canvas.create_window(400, 100, window=titulo)
-        referencia = tk.Entry(self.buscar, font=("Arial", 12, "bold"))
+        referencia = tk.Entry(self, font=("Arial", 12, "bold"))
         canvas.create_window(300, 200, window=referencia)
-        buscar_B = tk.Button(self.buscar, text="BUSCAR", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
+        buscar_B = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
         canvas.create_window(500, 175, window=buscar_B)
-        limpiar_B = tk.Button(self.buscar, text="LIMPIAR ", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
+        limpiar_B = tk.Button(self, text="LIMPIAR ", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
         canvas.create_window(500, 225, window=limpiar_B)
         canvas.create_rectangle(100, 275, 700,500, fill="white", outline="black")
         canvas.create_text(200, 300, text="DATOS CLIENTE:", font=("Arial", 12, "bold"))
@@ -259,42 +342,43 @@ class BuscarHistorial:
         canvas.create_text(550, 400, text="ESTADO: ", font=("Arial", 12, "bold"))
         canvas.create_text(200, 400, text="ATENDIDO POR:", font=("Arial", 12, "bold"))
         canvas.create_text(550, 450, text="TOTAL: ", font=("Arial",12, "bold"))
-        cancelar_B = tk.Button(self.buscar, text="CANCELAR", font=("Arial", 12, "bold"), command= self.cancelar,bg="gray20", fg="white")
+        cancelar_B = tk.Button(self, text="CANCELAR", font=("Arial", 12, "bold"), command=  self.ref_sub.volver_menu,bg="gray20", fg="white")
         canvas.create_window(590, 575, window=cancelar_B)
-        aceptar_B = tk.Button(self.buscar, text="ACEPTAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
+        aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
         canvas.create_window(730, 575, window=aceptar_B)
 
 
-    def cancelar(self):
-        self.buscar.destroy()
-
-class Bodega:
-    def __init__(self, master):
-        self.bodega = tk.Toplevel(master)
-        self.bodega.title("BODEGA")
-        self.bodega.geometry("800x600")
-        canvas = tk.Canvas(self.bodega, width=800, height=600)
+class Bodega(tk.Frame):
+    def __init__(self, master, ref_sub):
+        super().__init__(master, width=800, height=600)
+        self.ref_sub = ref_sub
+        self.pack_propagate(False)
+        canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        modelo_entrada = tk.Entry(self.bodega, font=("Arial", 14, "bold"))
-        canvas.create_window(300,50, window=modelo_entrada)
+        modelo_entrada = tk.Entry(self, font=("Arial", 14, "bold"))
+        canvas.create_window(300, 50, window=modelo_entrada)
         aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
-        tipo_aparato = tk.StringVar()  # Aqui se guardara que tipo de aparato selecciono el usuario
-        aparato_entrada = tk.OptionMenu(self.bodega, tipo_aparato, *aparatos_validos)
+        tipo_aparato = tk.StringVar()
+        aparato_entrada = tk.OptionMenu(self, tipo_aparato, *aparatos_validos)
         canvas.create_window(300, 100, window=aparato_entrada)
-        buscar_B = tk.Button(self.bodega, text="BUSCAR" ,font=("Arial", 12, "bold"), bg="Slategray4", fg="black" ,width=15, height=2)
+        buscar_B = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"),bg="Slategray4", fg="black", width=15, height=2)
         canvas.create_window(600, 75, window=buscar_B)
-        canvas.create_rectangle(50,150, 750, 550, fill="white" )
-
-
-
-        cancelar_B = tk.Button(self.bodega, text="CANCELAR", font=("Arial", 12, "bold"), command=self.cancelar,bg="gray20", fg="white")
+        canvas.create_rectangle(50, 150, 750, 550, fill="white", outline="gray")
+        scrollbar = tk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        contenedor = tk.Frame(canvas, bg="white")
+        canvas_window = canvas.create_window((50, 200), window=contenedor, anchor="nw")
+        def on_configure(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            canvas.itemconfig(canvas_window, width=700)  # Ajusta ancho del frame
+        contenedor.bind("<Configure>", on_configure)
+        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
+        cancelar_B = tk.Button(self, text="CANCELAR", font=("Arial", 12, "bold"),command= self.ref_sub.volver_menu, bg="gray20", fg="white")
         canvas.create_window(590, 575, window=cancelar_B)
-        aceptar_B = tk.Button(self.bodega, text="ACEPTAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
+        aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"),bg="gray20", fg="white")
         canvas.create_window(730, 575, window=aceptar_B)
-
-    def cancelar(self):
-        self.bodega.destroy()
 
 
 
