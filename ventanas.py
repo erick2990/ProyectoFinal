@@ -4,6 +4,7 @@ from datetime import date
 from tkinter import messagebox
 
 from cloudinit.util import center
+from gtweak.widgets import build_gsettings_list_store
 from oauthlib.uri_validate import hier_part
 from pygments import highlight
 fecha = date.today()
@@ -155,17 +156,17 @@ class SubAdmin:
         self.frames = {} #Se crea un diccionario de frames para ser invocados
         self.crear_frame() #Se llama a la funcion de crear frames
 
-        trabajadores_B = tk.Button(self.sub, text="TRABAJADORES", font=("Arial",14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        trabajadores_B = tk.Button(self.sub, text="TRABAJADORES", font=("Arial",14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(100, 200, window=trabajadores_B)
-        estadisticas_B = tk.Button(self.sub, text="ESTADISTICAS", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        estadisticas_B = tk.Button(self.sub, text="ESTADISTICAS", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(400, 200, window=estadisticas_B)
-        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES" ,font=("Arial", 14, "bold"), command=self.mostrar_historial, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES" ,font=("Arial", 14, "bold"), command=self.mostrar_historial, highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(700, 200, window=consulta_B)
-        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(100, 300, window=bodega_B)
-        clientes_B = tk.Button(self.sub, text="CLIENTES", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        clientes_B = tk.Button(self.sub, text="CLIENTES", font=("Arial", 14, "bold"), command=self.mostrar_clientes, highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(400, 300, window=clientes_B)
-        cobros_B = tk.Button(self.sub, text="Historial\nCobros", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        cobros_B = tk.Button(self.sub, text="Historial\nCobros", font=("Arial", 14, "bold"), command=self.mostrar_cobros, highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(700, 300, window=cobros_B)
         cerrar_B = tk.Button(self.sub, text="Cerrar Sesión", font=("Arial",14,"bold"), command=self.cerrar_sesion, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
         self.canvas.create_window(400, 500, window=cerrar_B)
@@ -175,8 +176,8 @@ class SubAdmin:
         #self.frames["estadisticas"] = aqui el codigo para estadistica
         self.frames["historial"] = BuscarHistorial(self.contenido, self)
         self.frames["bodega"] = Bodega(self.contenido, self)
-        #self.frames["clientes"] = Clientes(self.contenido, self)
-        #self.frames["cobros"] = Clientes(self.contenido, self)
+        self.frames["clientes"] = Clientes(self.contenido, self)
+        self.frames["cobros"] = Clientes(self.contenido, self)
 
     def mostrar_frame(self, nombre):
         self.canvas.pack_forget()
@@ -381,7 +382,37 @@ class Bodega(tk.Frame):
         canvas.create_window(730, 575, window=aceptar_B)
 
 
+class Clientes(tk.Frame):
+    def __init__(self, master, ref_sub):
+        super().__init__(master, width=800, height=600)
+        self.ref_sub = ref_sub
+        self.pack_propagate(False)
+        canvas = tk.Canvas(self, width=800, height=600)
+        canvas.pack(fill="both", expand=True)
+        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        #buscar por nombre, nit o telefono
+        canvas.create_text(400, 50, text="BUSCAR CLIENTES POR:  ", font=("Arial", 12, "italic"), fill="white" )
+        buscar_nombreB = tk.Button(self, text="Nombre", font=("Arial", 12, "bold"),bg="gray20", fg="white", width=15, height=2 )
+        canvas.create_window(500, 100, window=buscar_nombreB)
+        buscar_nitB = tk.Button(self, text="NIT", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=15, height=2)
+        canvas.create_window(500, 150, window=buscar_nitB)
+        buscar_telefonoB = tk.Button(self, text="Teléfono", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=15, height=2)
+        canvas.create_window(500, 200, window=buscar_telefonoB)
+        entrada = tk.Entry(self, font=("Arial", 12, "bold"))
+        canvas.create_window(300,150, window=entrada)
+        aceptar_B = tk.Button(self, text="Cancelar", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
+        canvas.create_window(730, 575, window=aceptar_B)
 
+
+class Cobros(tk.Frame):
+    def __init__(self, master, ref_sub):
+        super().__init__(master, width=800, height=600)
+        self.ref_sub = ref_sub
+        self.pack_propagate(False)
+        canvas = tk.Canvas(self, width=800, height=600)
+        canvas.pack(fill="both", expand=True)
+        aplicar_logo(canvas,"/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        canvas.create_text(400, 50, text="FILTRAR BUSQUEDA: ", font=("Arial", 12, "bold"))
 
 
 
