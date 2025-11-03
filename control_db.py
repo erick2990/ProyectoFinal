@@ -53,7 +53,22 @@ class Cliente(BaseDB):
             )
             """)
 
-class
+class Aparatos(BaseDB):
+    @staticmethod
+    def crear_tabla():
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            no INTEGER PRIMARY KEY AUTOINCREMENT(
+            tipo TEXT,
+            marca TEXT,
+            modelo TEXT,
+            falla TEXT,
+            cliente_nit TEXT
+            FOREIGN KEY(cliente_nit) REFERENCES clientes(nit)
+            )
+            """)
+
 
 
 
