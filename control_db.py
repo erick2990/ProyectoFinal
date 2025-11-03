@@ -1,111 +1,66 @@
 import sqlite3
 
-DB_NAME = "Taller.db"
 
-
-class Taller:
-    def __init__(self):
-        self.nombre = "Taller de Reparación"
+class BaseDB:
+    DB_NAME = "Taller.db" #Se crea la base de datos con el nombre asignado
 
     @staticmethod
     def _conn():
-        conn = sqlite3.connect(DB_NAME)
-        conn.row_factory =sqlite3.Row
+        conn = sqlite3.connect(BaseDB.DB_NAME) #Se conecta con la base de datos
+        conn.row_factory = sqlite3.Row
         return conn
 
-    def crear_tablas(self):
-        conn = self._conn()
+class Administrador(BaseDB):
+    @staticmethod
+    def crear_tabla():
+        conn = BaseDB._conn()
         cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS administrador (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                usuario TEXT UNIQUE NOT NULL,
+                contra TEXT NOT NULL
+            )
+            """)
+        conn.commit()
+        conn.close()
 
-        cursor.execute("""  
-        CREATE TABLE IF NOT EXISTS usuarios(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT,
-            usuario TEXT,
-            contra TEXT
-        )    
-        """)
+class Usuario(BaseDB):
+    @staticmethod
+    def crear_tabla():
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
         cursor.execute("""
-        CREATE TABLE IF NOT EXISTS clientes(
-            nit INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT,
-            celular TEXT,
-            direccion TEXT
-        )
-        """)
+            CREATE TABLE IF NOT EXISTS usuario(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                usuario TEXT UNIQUE NOT NULL,
+                contra TEXT NOT NULL
+            )
+            """)
+class Cliente(BaseDB):
+    @staticmethod
+    def crear_tabla():
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS cliente(
+                nit INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                celular TEXT NOT NULL,
+                direccion TEXT NOT NULL
+            )
+            """)
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS aparatos(
-            no INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo TEXT,
-            marca TEXT,
-            modelo TEXT,
-            falla TEXT,
-            cliente_nit TEXT
-            FOREIGN KEY(cliente_nit) REFERENCES cliente(nit)
-        )
-        """)
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS bodega(
-            pieza INTEGER PRIMARY KEY AUTOINCREMENT,
-            producto TEXT,
-            modelo TEXT
-        )
-        """)
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS registros_entradas(
-            registro_entrada INTEGER PRIMARY KEY AUTOINCREMENT,
-            no_aparato INTEGER,
-            id_trabajador INTEGER,
-            cliente_nit INTEGER
-            presupuesto REAL,
-            FOREIGN KEY(no_aparato) REFERENCES aparatos(no)
-            FOREIGN KEY(id_trabajador) REFERENCES usuarios(id)
-            FOREIGN KEY(cliente_nit) REFERENCES cliente(nit)
-        )
-        """)
+class
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS registros_salidas(
-            registro_salida INTEGER PRIMARY KEY AUTOINCREMENT,
-            no_aparato INTEGER,
-            no_registro_entrada INTEGER,
-            id_trabajador INTEGER,
-            total REAL,
-            FOREIGN KEY(no_aparato) REFERENCES aparatos(no)
-            FOREIGN KEY(no_registro) REFERENCES registros_entradas(registro_entrada) 
-        )   
-        """)
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS movimiento_bodega(
-            registro_bodega INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_trabajador INTEGER,
-            fecha TEXT,
-            aparato TEXT,
-            modelo TEXT,
-            FOREIGN KEY(id_trabajador) REFERENCES usuarios(id)
-        )
-        """)
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS detalle_trabajos(
-            no_registro_entrada INTEGER 
-            no_registros_salida INTEGER 
-            total_cobrado INTEGER
-            FOREIGN KEY(no_registro_entrada) REFERENCES registros_entradas
-            FOREIGN KEY(no_registro_salida) REFERENCES registros_salidas
-        )
-        """)
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS detalle_historial(
-            no_registro INTEGER,
-            nit_cliente INTEGER,
-            total INTEGER,
-            FOREIGN KEY(total) REFERENCES detalle_trabajos(total_cobrado)
-        )
-        """)
+
+
+
 
 
 

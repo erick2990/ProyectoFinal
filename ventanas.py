@@ -1,10 +1,10 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 from datetime import date
-from tkinter import messagebox
-
-from cloudinit.util import center
+from tkinter import messagebox, ttk
+import calendar
 from gtweak.widgets import build_gsettings_list_store
+from netaddr.strategy.ipv6 import width
 from oauthlib.uri_validate import hier_part
 from pygments import highlight
 fecha = date.today()
@@ -91,15 +91,15 @@ class SubTrabajador:
 
         self.frames = {}
         self.crear_frames()
-        registrar_aparatoB = tk.Button(self.sub, text="REGISTRAR\nAPARATO", font=("Arial", 14, "bold"), command=self.mostrar_aparato, highlightthickness=3, highlightbackground="blue4")
+        registrar_aparatoB = tk.Button(self.sub, text="REGISTRAR\nAPARATO", font=("Arial", 14, "bold"), command=self.mostrar_aparato, highlightthickness=3, highlightbackground="dark slate gray", bg="gray20", fg="white")
         self.canvas.create_window(100, 200, window = registrar_aparatoB)
-        cotizar_B = tk.Button(self.sub, text="COTIZACIÓN DE\nREPARACIÓN", font=("Arial", 14, "bold"), command=self.mostrar_cotizacion,highlightthickness=3, highlightbackground="blue4")
+        cotizar_B = tk.Button(self.sub, text="COTIZACIÓN DE\nREPARACIÓN", font=("Arial", 14, "bold"), command=self.mostrar_cotizacion,highlightthickness=3, highlightbackground="dark slate gray", bg="gray20", fg="white")
         self.canvas.create_window(400, 200 , window=cotizar_B)
-        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES", font=("Arial", 14, "bold"),command=self.mostrar_historial,highlightthickness=3, highlightbackground="blue4")
+        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES", font=("Arial", 14, "bold"),command=self.mostrar_historial,highlightthickness=3, highlightbackground="dark slate gray", bg="gray20", fg="white")
         self.canvas.create_window(685,200, window=consulta_B)
-        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(400, 300, window=bodega_B)
-        cerrar_B = tk.Button(self.sub, text="CERRAR SESIÓN", font=("Arial", 14, "bold"),command=self.cerrar_sesion, highlightthickness="3", highlightbackground="blue4", width=15, height=2)
+        cerrar_B = tk.Button(self.sub, text="CERRAR SESIÓN", font=("Arial", 14, "bold"),command=self.cerrar_sesion, highlightthickness="3", highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(400, 500, window=cerrar_B)
 
     def crear_frames(self):
@@ -156,28 +156,28 @@ class SubAdmin:
         self.frames = {} #Se crea un diccionario de frames para ser invocados
         self.crear_frame() #Se llama a la funcion de crear frames
 
-        trabajadores_B = tk.Button(self.sub, text="TRABAJADORES", font=("Arial",14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
+        trabajadores_B = tk.Button(self.sub, text="TRABAJADORES", font=("Arial",14, "bold"), command=self.mostrar_trabajador , highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(100, 200, window=trabajadores_B)
-        estadisticas_B = tk.Button(self.sub, text="ESTADISTICAS", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
+        estadisticas_B = tk.Button(self.sub, text="ESTADISTICAS", font=("Arial", 14, "bold"), highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(400, 200, window=estadisticas_B)
-        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES" ,font=("Arial", 14, "bold"), command=self.mostrar_historial, highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
+        consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES" ,font=("Arial", 14, "bold"), command=self.mostrar_historial, highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(700, 200, window=consulta_B)
-        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
+        bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(100, 300, window=bodega_B)
-        clientes_B = tk.Button(self.sub, text="CLIENTES", font=("Arial", 14, "bold"), command=self.mostrar_clientes, highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
+        clientes_B = tk.Button(self.sub, text="CLIENTES", font=("Arial", 14, "bold"), command=self.mostrar_clientes, highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(400, 300, window=clientes_B)
-        cobros_B = tk.Button(self.sub, text="Historial\nCobros", font=("Arial", 14, "bold"), command=self.mostrar_cobros, highlightthickness=3, highlightbackground="blue4", width=15, height=2, bg="gray20", fg="white")
+        cobros_B = tk.Button(self.sub, text="HISTORIAL\nCOBROS", font=("Arial", 14, "bold"), command=self.mostrar_cobros, highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(700, 300, window=cobros_B)
-        cerrar_B = tk.Button(self.sub, text="Cerrar Sesión", font=("Arial",14,"bold"), command=self.cerrar_sesion, highlightthickness=3, highlightbackground="blue4", width=15, height=2)
+        cerrar_B = tk.Button(self.sub, text="CERRAR SESIÓN", font=("Arial",14,"bold"), command=self.cerrar_sesion, highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(400, 500, window=cerrar_B)
 
     def crear_frame(self):
-        #self.frames["trabajador"] = aqui el codigo para trabajador
+        self.frames["trabajador"] = Trabajador(self.contenido, self)
         #self.frames["estadisticas"] = aqui el codigo para estadistica
         self.frames["historial"] = BuscarHistorial(self.contenido, self)
         self.frames["bodega"] = Bodega(self.contenido, self)
         self.frames["clientes"] = Clientes(self.contenido, self)
-        self.frames["cobros"] = Clientes(self.contenido, self)
+        self.frames["cobros"] = Cobros(self.contenido, self)
 
     def mostrar_frame(self, nombre):
         self.canvas.pack_forget()
@@ -220,12 +220,14 @@ class AgregarAparato(tk.Frame):
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        titulo = tk.Label(self, text="AGREGAR APARATO", font=("Arial",14,"italic"), width=20, height=2)
+        canvas.create_window(350, 50, window=titulo)
         dato_etiqueta = tk.Label(self, text="DATOS CLIENTE: ", font=("Arial", 14, "bold"), width=20, height=2)
         canvas.create_window(100, 100, window=dato_etiqueta)
         detalles_etiqueta = tk.Label(self, text=" DETALLES APARATO: ", font=("Arial", 14, "bold"), width=20, height=2)
         canvas.create_window(100,350, window=detalles_etiqueta)
         fecha_etiqueta = tk.Label(self, text=f"{fecha.strftime("%d/%m/%y")}", font=("Arial", 12, "bold"), bg="white",width=10, height=2)
-        canvas.create_window(600, 50, window=fecha_etiqueta)
+        canvas.create_window(620, 50, window=fecha_etiqueta)
         caso_etiqueta = tk.Label(self, text="No. 0000", font=("Arial", 12, "bold"), bg="white", width=10, height=2)
         canvas.create_window(700, 50, window=caso_etiqueta)
         canvas.create_text(50, 150, text="NIT:", font=("Arial", 14, "italic"), fill="white")
@@ -244,9 +246,9 @@ class AgregarAparato(tk.Frame):
         celular = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
         canvas.create_window(630, 175, window=celular)
         direccion = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=30)
-        canvas.create_window(60, 300, window=direccion)
+        canvas.create_window(140, 300, window=direccion)
         marca = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
-        canvas.create_window(80, 450, window=marca)
+        canvas.create_window(100, 450, window=marca)
         modelo = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
         canvas.create_window(280, 450, window=modelo)
         falla = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
@@ -274,12 +276,14 @@ class Cotizacion(tk.Frame):
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        titulo = tk.Label(self, text="COTIZACIÓN DE APARATO", font=("Arial", 14, "italic"), width=24, height=2)
+        canvas.create_window(350, 50, window=titulo)
         dato_etiqueta = tk.Label(self, text="DATOS CLIENTE: ", font=("Arial", 14, "bold"), width=20, height=2)
         canvas.create_window(100, 100, window=dato_etiqueta)
         detalles_etiqueta = tk.Label(self, text=" DETALLES APARATO: ", font=("Arial", 14, "bold"), width=20, height=2)
         canvas.create_window(100,350, window=detalles_etiqueta)
         fecha_etiqueta = tk.Label(self, text=f"{fecha.strftime("%d/%m/%y")}", font=("Arial", 12, "bold"), bg="white",width=10, height=2)
-        canvas.create_window(600, 50, window=fecha_etiqueta)
+        canvas.create_window(620, 50, window=fecha_etiqueta)
         caso_etiqueta = tk.Label(self, text="No. 0000", font=("Arial", 12, "bold"), bg="white", width=10, height=2)
         canvas.create_window(700, 50, window=caso_etiqueta)
         canvas.create_text(50, 150, text="NIT:", font=("Arial", 14, "italic"), fill="white")
@@ -298,9 +302,9 @@ class Cotizacion(tk.Frame):
         celular = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
         canvas.create_window(630, 175, window=celular)
         direccion = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=30)
-        canvas.create_window(60, 300, window=direccion)
+        canvas.create_window(140, 300, window=direccion)
         marca = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
-        canvas.create_window(80, 450, window=marca)
+        canvas.create_window(100, 450, window=marca)
         modelo = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
         canvas.create_window(280, 450, window=modelo)
         falla = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
@@ -328,7 +332,7 @@ class BuscarHistorial(tk.Frame):
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        titulo = tk.Label(self, text="BÚSQUEDA POR NO. DE REFERENCIA:",font=("Arial", 12, "bold"),  width=50, height=2)
+        titulo = tk.Label(self, text="BÚSQUEDA POR NO. DE REFERENCIA:",font=("Arial", 14, "italic"),  width=50, height=2)
         canvas.create_window(400, 100, window=titulo)
         referencia = tk.Entry(self, font=("Arial", 12, "bold"))
         canvas.create_window(300, 200, window=referencia)
@@ -357,14 +361,16 @@ class Bodega(tk.Frame):
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        titulo = tk.Label(self, text="BODEGA:", font=("Arial", 14, "italic"), width=50,height=2)
+        canvas.create_window(400, 50, window=titulo)
         modelo_entrada = tk.Entry(self, font=("Arial", 14, "bold"))
-        canvas.create_window(300, 50, window=modelo_entrada)
+        canvas.create_window(250, 95, window=modelo_entrada)
         aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
         tipo_aparato = tk.StringVar()
         aparato_entrada = tk.OptionMenu(self, tipo_aparato, *aparatos_validos)
-        canvas.create_window(300, 100, window=aparato_entrada)
+        canvas.create_window(250, 130, window=aparato_entrada)
         buscar_B = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"),bg="Slategray4", fg="black", width=15, height=2)
-        canvas.create_window(600, 75, window=buscar_B)
+        canvas.create_window(550, 110, window=buscar_B)
         canvas.create_rectangle(50, 150, 750, 550, fill="white", outline="gray")
         scrollbar = tk.Scrollbar(self, orient="vertical", command=canvas.yview)
         scrollbar.pack(side="right", fill="y")
@@ -391,16 +397,17 @@ class Clientes(tk.Frame):
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
         #buscar por nombre, nit o telefono
-        canvas.create_text(400, 50, text="BUSCAR CLIENTES POR:  ", font=("Arial", 12, "italic"), fill="white" )
-        buscar_nombreB = tk.Button(self, text="Nombre", font=("Arial", 12, "bold"),bg="gray20", fg="white", width=15, height=2 )
-        canvas.create_window(500, 100, window=buscar_nombreB)
-        buscar_nitB = tk.Button(self, text="NIT", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=15, height=2)
+        titulo = tk.Label(self, text="BUSCAR CLIENTES: ", font=("Arial", 14, "italic"), width=50, height=2)
+        canvas.create_window(400, 50, window=titulo)
+        buscar_nombreB = tk.Button(self, text="Nombre", font=("Arial", 12, "bold"),bg="gray20", fg="white", width=10, height=2 )
+        canvas.create_window(400, 150, window=buscar_nombreB)
+        buscar_nitB = tk.Button(self, text="NIT", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=10, height=2)
         canvas.create_window(500, 150, window=buscar_nitB)
-        buscar_telefonoB = tk.Button(self, text="Teléfono", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=15, height=2)
-        canvas.create_window(500, 200, window=buscar_telefonoB)
+        buscar_telefonoB = tk.Button(self, text="Teléfono", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=10, height=2)
+        canvas.create_window(600, 150, window=buscar_telefonoB)
         entrada = tk.Entry(self, font=("Arial", 12, "bold"))
-        canvas.create_window(300,150, window=entrada)
-        aceptar_B = tk.Button(self, text="Cancelar", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
+        canvas.create_window(245,150, window=entrada)
+        aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
         canvas.create_window(730, 575, window=aceptar_B)
 
 
@@ -412,7 +419,103 @@ class Cobros(tk.Frame):
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas,"/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        canvas.create_text(400, 50, text="FILTRAR BUSQUEDA: ", font=("Arial", 12, "bold"))
+        titulo = tk.Label(self, text="BUSQUEDA COBROS: ", font=("Arial", 14, "italic"), width=50, height=2)
+        canvas.create_window(400, 50, window=titulo)
+
+        def actualizar_dias_desde(event):
+            mes = meses.current() + 1
+            year = int(anio.get())
+            dias = [str(i) for i in range(1, calendar.monthrange(year, mes)[1] + 1)]
+            dias_desde.config(values=dias)
+            dias_desde.set("Día")
+
+        etiqueta_desde = tk.Label(self, text="Desde:", font=("Arial", 14, "bold"), width=10, height=2)
+        canvas.create_window(100, 100,window=etiqueta_desde)
+        #Calendario para el desde
+        anio = ttk.Combobox(self, values=[str(y) for y in range(2020, 2031)], width=6)
+        anio.set("2025")
+        canvas.create_window(80, 150, window=anio)
+        meses = ttk.Combobox(self, values=list(calendar.month_name[1:]), width=10)
+        meses.set("Mes")
+        meses.bind("<<ComboboxSelected>>", actualizar_dias_desde)
+        canvas.create_window(160, 150, window=meses)
+        dias_desde = ttk.Combobox(self, values=[], width=5)
+        dias_desde.set("Día")
+        canvas.create_window(235, 150, window=dias_desde)
+
+
+        def actualizar_dias_hasta(event):
+            mes = meses.current() + 1
+            year = int(anio.get())
+            dias = [str(i) for i in range(1, calendar.monthrange(year, mes)[1] + 1)]
+            dias_hasta.config(values=dias)
+            dias_hasta.set("Día")
+
+        #HASTA
+        etiqueta_hasta = tk.Label(self, text="Hasta: ", font=("Arial", 14, "bold"), width=10, height=2)
+        canvas.create_window(500, 100, window=etiqueta_hasta)
+        #CALENDARIO HASTA
+        anio_hasta = ttk.Combobox(self, values=[str(y) for y in range(2020, 2031)], width=6)
+        anio_hasta.set("2025")
+        canvas.create_window(480, 150, window=anio_hasta)
+        meses_hasta = ttk.Combobox(self, values=list(calendar.month_name[1:]), width=10)
+        meses_hasta.set("Mes")
+        meses_hasta.bind("<<ComboboxSelected>>", actualizar_dias_hasta)
+        canvas.create_window(560, 150, window=meses_hasta)
+        dias_hasta = ttk.Combobox(self, values=[], width=5)
+        dias_hasta.set("Día")
+        canvas.create_window(635, 150, window=dias_hasta)
+
+        boton_buscar = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
+        canvas.create_window(370, 200, window=boton_buscar)
+
+
+
+        aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
+        canvas.create_window(730, 575, window=aceptar_B)
+
+class Trabajador(tk.Frame):
+    def __init__(self, master, ref_sub):
+        super().__init__(master, width=800, height=600)
+        self.ref_sub = ref_sub
+        self.pack_propagate(False)
+        self.canvas = tk.Canvas(self, width=800, height=600)
+        self.canvas.pack(fill="both", expand=True)
+        aplicar_logo(self.canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        titulo = tk.Label(self, text="TRABAJADOR: ", font=("Arial", 14, "italic"), width=50, height=2)
+        self.canvas.create_window(400, 50, window=titulo)
+
+        self.sub_frame = {} #Se crea un diccionario de frames para ser invocados
+        self.crear_subFrame() #Se llama a la funcion de crear frames
+
+        crear_trabajador = tk.Button(self, text="Crear Trabajador", font=("Arial",12, "bold"), command=self.agregar_trabajador, bg="gray20", fg="white", width=20, height=2)
+        self.canvas.create_window(400, 200, window=crear_trabajador)
+        self.canvas.create_text(400, 250, text="Agrega información de nuevos trabajadores", font=("Arial", 14, "bold"), fill="white")
+        listar_trabajador = tk.Button(self, text="Listar Trabajadores", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=20, height=2)
+        self.canvas.create_window(400,400, window=listar_trabajador)
+        self.canvas.create_text(400, 450, text="Listado de todos los trabajadores contratados", font=("Arial", 14, "bold"), fill="white")
+
+        aceptar_b = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
+        self.canvas.create_window(730, 575, window=aceptar_b)
+
+    def crear_subFrame(self):
+        self.sub_frame["crear_trabajador"] = AgregarTrabajador(self, self.ref_sub)
+        #self.sub_frame["listado_trabajador"] =
+
+    def mostrar_frame(self, nombre):
+        #self.canvas.pack_forget()
+        #self.ref_sub.pack(fill="both", expand=True)
+        for frame in self.sub_frame.values():
+            frame.pack_forget()
+        self.sub_frame[nombre].pack(fill="both", expand=True)
+
+    def agregar_trabajador(self):
+        self.mostrar_frame("crear_trabajador")
+
+    def listar_trabajadores(self):
+        pass
+        #self.mostrar_frame("listado_trabajador")
+
 
 
 
