@@ -485,10 +485,8 @@ class Trabajador(tk.Frame):
         titulo = tk.Label(self, text="TRABAJADOR: ", font=("Arial", 14, "italic"), width=50, height=2)
         self.canvas.create_window(400, 50, window=titulo)
 
-        self.sub_frame = {} #Se crea un diccionario de frames para ser invocados
-        self.crear_subFrame() #Se llama a la funcion de crear frames
 
-        crear_trabajador = tk.Button(self, text="Crear Trabajador", font=("Arial",12, "bold"), command=self.agregar_trabajador, bg="gray20", fg="white", width=20, height=2)
+        crear_trabajador = tk.Button(self, text="Crear Trabajador", font=("Arial",12, "bold"), bg="gray20", fg="white", width=20, height=2)
         self.canvas.create_window(400, 200, window=crear_trabajador)
         self.canvas.create_text(400, 250, text="Agrega información de nuevos trabajadores", font=("Arial", 14, "bold"), fill="white")
         listar_trabajador = tk.Button(self, text="Listar Trabajadores", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=20, height=2)
@@ -497,25 +495,6 @@ class Trabajador(tk.Frame):
 
         aceptar_b = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
         self.canvas.create_window(730, 575, window=aceptar_b)
-
-    def crear_subFrame(self):
-        self.sub_frame["crear_trabajador"] = AgregarTrabajador(self, self.ref_sub)
-        #self.sub_frame["listado_trabajador"] =
-
-    def mostrar_frame(self, nombre):
-        #self.canvas.pack_forget()
-        #self.ref_sub.pack(fill="both", expand=True)
-        for frame in self.sub_frame.values():
-            frame.pack_forget()
-        self.sub_frame[nombre].pack(fill="both", expand=True)
-
-    def agregar_trabajador(self):
-        self.mostrar_frame("crear_trabajador")
-
-    def listar_trabajadores(self):
-        pass
-        #self.mostrar_frame("listado_trabajador")
-
 
 
 
