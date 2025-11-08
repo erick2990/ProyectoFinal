@@ -1,9 +1,10 @@
+import sqlite3
 import tkinter as tk
 from PIL import Image, ImageTk
 from datetime import date
 from tkinter import messagebox, ttk
 import calendar
-from gtweak.widgets import build_gsettings_list_store
+from control_db import Usuario, GestorUsuarios
 from netaddr.strategy.ipv6 import width
 from oauthlib.uri_validate import hier_part
 from pygments import highlight
@@ -64,7 +65,8 @@ class Login:
             return
         if usuario == "admin" and contra == "1234":
             self.root.withdraw()
-            SubAdmin(self.root, self)
+            Maestra(self.root, self)
+            #SubAdmin(self.root, self)
         elif usuario == "erick" and contra == "1234":
             self.root.withdraw()
             SubTrabajador(self.root, self)
@@ -75,6 +77,86 @@ class Login:
 
     def run(self):
         self.root.mainloop()
+
+class Maestra:
+    def __init__(self, master, login_ref):
+        self.login_ref = login_ref
+        self.ventana_maestra = tk.Toplevel(master)
+        self.ventana_maestra.title("VENTANA MAESTRA")
+        self.ventana_maestra.geometry("800x600")
+        self.canvas = tk.Canvas(self.ventana_maestra, width=800, height=600)
+        self.canvas.pack(fill="both", expand=True)
+        aplicar_logo(self.canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        self.contenido = tk.Frame(self.ventana_maestra, width=800, height=600)
+        self.contenido.pack_forget()  # ocultar al inicio
+
+        self.canvas.create_text(100, 50, text="NOMBRE:", font=("Arial", 14, "bold"), fill="white")
+        self.canvas.create_text(500, 50, text="USUARIO:", font=("Arial", 14, "bold"), fill="white")
+        self.canvas.create_text(125, 200, text="CONTRASEÑA:", font=("Arial", 14, "bold"), fill="white")
+        self.canvas.create_text(500, 200, text="REPETIR CONTRASEÑA:", font=("Arial", 14, "bold"), fill="white")
+        self.canvas.create_text(200, 400, text="(ROL POR DEFECTO ADMINSTRADOR)", font=("Arial", 12, "italic"), fill="white")
+        self.entry_nombre = tk.Entry(self.ventana_maestra, font=("Arial", 12))
+        self.canvas.create_window(125, 100, window=self.entry_nombre)
+
+        self.entry_usuario = tk.Entry(self.ventana_maestra, font=("Arial", 12))
+        self.canvas.create_window(500, 100, window=self.entry_usuario)
+
+        self.entry_contra = tk.Entry(self.ventana_maestra, show="*", font=("Arial", 12))
+        self.canvas.create_window(125, 250, window=self.entry_contra)
+
+        self.entry_repetir = tk.Entry(self.ventana_maestra, show="*", font=("Arial", 12))
+        self.canvas.create_window(500, 250, window=self.entry_repetir)
+
+        agregar_admin = tk.Button(self.ventana_maestra, text="CREAR ADMINISTRADOR", font=("Arial", 14, "bold"), command=self.crear_admin,highlightthickness=3, highlightbackground="dark slate gray", bg="gray20", fg="white")
+        self.canvas.create_window(650, 550, window=agregar_admin)
+
+        cerrar_B = tk.Button(self.ventana_maestra, text="CANCELAR", font=("Arial", 14, "bold"), command=self.cerrar_sesion, highlightthickness="3", highlightbackground="dark slate gray",bg="gray20", fg="white")
+        self.canvas.create_window(450, 550, window=cerrar_B)
+
+        self.mostrar_contra = tk.BooleanVar()  # Esta variable sirve para saber si el usuario decide ver la contraseña o no
+
+        def revelar_contra():
+            if self.mostrar_contra.get():
+                self.entry_contra.config(show="")  # com esto se muestra el texto
+                self.entry_repetir.config(show="")
+            else:
+                self.entry_contra.config(show="*")  # oculta la contraseña
+                self.entry_repetir.config(show="*")
+
+        checkbox = tk.Checkbutton(self.canvas, text="MOSTRAR CONTRASEÑAS", variable=self.mostrar_contra, command=revelar_contra,font=("Arial", 10, "italic"), bg="white")
+        self.canvas.create_window(125, 275, window=checkbox)
+
+    def cerrar_sesion(self):
+        self.ventana_maestra.destroy()
+        self.ventana_maestra.master.deiconify()
+        if hasattr(self.login_ref, "ingreso_usuario") and hasattr(self.login_ref, "ingreso_contra"):
+            self.login_ref.ingreso_usuario.delete(0, tk.END)
+            self.login_ref.ingreso_contra.delete(0, tk.END)
+
+
+
+    def crear_admin(self):
+        nombre = self.entry_nombre.get()
+        usuario = self.entry_usuario.get()
+        contra = self.entry_contra.get()
+        repetir = self.entry_repetir.get()
+
+        if not all([nombre, usuario, contra, repetir]):
+            messagebox.showwarning("Campos vacíos", "Por favor completa todos los campos.")
+            return
+
+        if contra != repetir:
+            messagebox.showerror("Error", "Las contraseñas no coinciden.")
+            return
+
+        nuevo = Usuario(nombre, usuario, contra, "admin")
+        try:
+            GestorUsuarios.insertar(nuevo)
+            messagebox.showinfo("Éxito", "Administrador creado correctamente.")
+            self.cerrar_sesion()
+        except sqlite3.IntegrityError:
+            messagebox.showerror("Error", "El usuario ya existe.")
+
 
 class SubTrabajador:
 

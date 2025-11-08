@@ -1,5 +1,6 @@
 import sqlite3
 
+from jaraco.functools import result_invoke
 from orca.braille import cursorCell
 
 
@@ -266,6 +267,23 @@ class GestorRegistros(BaseDB):
         conn.close()
 
     @staticmethod
+    def listar_registros():
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM registros")
+        resultados = cursor.fetchall()
+        conn.close()
+        return resultados
+
+    @staticmethod
+    def filtrar_estado(estado):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM registros WHERE estado =?", (estado,))
+        resultados = cursor.fetchall()
+        conn.close()
+        return resultados
+
 
 
 
