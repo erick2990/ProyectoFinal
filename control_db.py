@@ -1,9 +1,5 @@
 import sqlite3
 
-from jaraco.functools import result_invoke
-from orca.braille import cursorCell
-
-
 class BaseDB:
     DB_NAME = "Taller.db" #Se crea la base de datos con el nombre asignado
 
@@ -25,18 +21,19 @@ class Usuario: #Clase para instancias usuarios
 
 
 class GestorUsuarios(BaseDB):
+
     @staticmethod  # Este metodo sirve para crear la tabla sobre los usuarios
     def crear_tabla():
         conn = BaseDB._conn()
         cursor = conn.cursor()
         cursor.execute("""
-              CREATE TABLE IF NOT EXISTS usuarios(
+                  CREATE TABLE IF NOT EXISTS usuarios(
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   nombre TEXT NOT NULL,
                   usuario TEXT UNIQUE NOT NULL,
                   contra TEXT NOT NULL,
                   rol TEXT NOT NULL CHECK(rol IN ('admin', 'trabajador', 'dev')) 
-              )
+                )
           """)
         conn.commit()
         conn.close()
@@ -66,7 +63,7 @@ class GestorUsuarios(BaseDB):
     def listar_todos():
         conn = BaseDB._conn()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM ususarios")
+        cursor.execute("SELECT * FROM usuarios")
         resultados = cursor.fetchall()
         conn.close()
         return resultados
@@ -77,7 +74,7 @@ class GestorUsuarios(BaseDB):
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE usuarios
-            SET nombre =?, usuarios =?, contra=?, rol=?
+            SET nombre =?, usuario =?, contra=?, rol=?
             WHERE id=?
         """, (nuevo_nombre, nuevo_usuario, nueva_contra, nuevo_rol, id_usuario))
         conn.commit()
@@ -209,11 +206,16 @@ class GestorAparatos(BaseDB):
         conn.commit()
         conn.close()
 
+
     @staticmethod
     def listar_aparatos():
         conn = BaseDB._conn()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM aparatos")
+        cursor.execute("""
+            SELECT a.no_aparato, a.marca, a.modelo, a.tipo, a.falla, c.nombre
+            FROM aparatos a
+            JOIN clientes c ON a.cliente_nit = c.nit
+        """)
         resultados = cursor.fetchall()
         conn.close()
         return resultados
@@ -225,6 +227,19 @@ class GestorAparatos(BaseDB):
         cursor.execute("DELETE FROM aparatos WHERE no_aparato=?", (no_aparato,))
         conn.commit()
         conn.close()
+
+    @staticmethod
+    def buscar_por_modelo_tipo(modelo, tipo):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM aparatos
+            WHERE modelo LIKE ? AND tipo LIKE ?
+        """, (f"%{modelo}%", f"%{tipo}%"))
+        resultados = cursor.fetchall()
+        conn.close()
+        return resultados
+
 
 #Esta clase se encarga de registrar las entradas y salidas de los aparatos
 class Registro:
@@ -245,11 +260,12 @@ class GestorRegistros(BaseDB):
             CREATE TABLE IF NOT EXISTS registros(
             no_registro INTEGER PRIMARY KEY AUTOINCREMENT,
             fecha TEXT NOT NULL,
+            estado TEXT NOT NULL,
             cliente_nit TEXT NOT NULL,
             no_aparato INTEGER NOT NULL,
             id_trabajador INTEGER NOT NULL,
-            FOREIGN KEY(cliente_nit) REFERENCES clientes(nit)
-            FOREIGN KEY(no_aparato) REFERENCES aparatos(no_aparato)
+            FOREIGN KEY(cliente_nit) REFERENCES clientes(nit),
+            FOREIGN KEY(no_aparato) REFERENCES aparatos(no_aparato),
             FOREIGN KEY(id_trabajador) REFERENCES usuarios(id)
             )
         """)
@@ -283,6 +299,19 @@ class GestorRegistros(BaseDB):
         resultados = cursor.fetchall()
         conn.close()
         return resultados
+
+    @staticmethod
+    def filtrar_por_fecha(fecha_inicio, fecha_fin):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM registros
+            WHERE fecha BETWEEN ? AND ?
+        """, (fecha_inicio, fecha_fin))
+        resultados = cursor.fetchall()
+        conn.close()
+        return resultados
+
 
 
 

@@ -4,18 +4,10 @@ from PIL import Image, ImageTk
 from datetime import date
 from tkinter import messagebox, ttk
 import calendar
-from control_db import Usuario, GestorUsuarios
-from netaddr.strategy.ipv6 import width
-from oauthlib.uri_validate import hier_part
-from pygments import highlight
+from control_db import Usuario, GestorUsuarios, BaseDB
+from control_db import GestorCliente, GestorAparatos, GestorRegistros, Cliente, Usuario, Aparatos, Registro
 fecha = date.today()
 
-admin_maestro = Usuario("Administrador", "Erick", "1234", "dev")
-GestorUsuarios.insertar_usuario(admin_maestro)
-try:
-    GestorUsuarios.insertar_usuario(admin_maestro)
-except Exception as e:
-    print('Error')
 
 def aplicar_logo(canvas, ruta_logo):
     logo = Image.open(ruta_logo).convert("RGBA")
@@ -26,6 +18,8 @@ def aplicar_logo(canvas, ruta_logo):
 
 class Login:
     def __init__(self):
+        #admin_maestro = Usuario("Administrador", "Erick", "1234", "dev")
+        #GestorUsuarios.insertar_usuario(admin_maestro)
         self.root = tk.Tk()
         self.root.title("TALLER ELECTRÓNICO")
         self.root.geometry("800x600") #Se creo la ventana root
@@ -63,12 +57,11 @@ class Login:
         boton_iniciar = tk.Button(canvas, text="Iniciar Sesión", font=("Arial", 12, "bold"), command=self.validar, bg="RoyalBlue4", fg="white")
         canvas.create_window(600, 450, window=boton_iniciar)
 
+
+
     def validar(self):
         usuario = self.ingreso_usuario.get()
         contra = self.ingreso_contra.get()
-        #if usuario == "admin" and contra == "1234":
-        #    self.root.withdraw()
-        #    Maestra(self.root, self)
         if not usuario or not contra:
             messagebox.showwarning("Campos vacíos", "Por favor, completa todos los campos antes de continuar.")
             return
@@ -77,13 +70,14 @@ class Login:
 
         if resultado:
             rol = resultado["rol"]
+            id_trabajador = resultado["id"]
             self.root.withdraw()
             if rol == "admin":
                 SubAdmin(self.root, self)
             elif rol == "dev":
                 Maestra(self.root, self)
             elif rol == "trabajador":
-                SubTrabajador(self.root, self)
+                SubTrabajador(self.root, self, id_trabajador)
             else:
                 messagebox.showinfo("Acceso", f"Rol no reconocido: {rol}")
         else:
@@ -149,9 +143,6 @@ class Maestra:
         if hasattr(self.login_ref, "ingreso_usuario") and hasattr(self.login_ref, "ingreso_contra"):
             self.login_ref.ingreso_usuario.delete(0, tk.END)
             self.login_ref.ingreso_contra.delete(0, tk.END)
-
-
-
     def crear_admin(self):
         nombre = self.entry_nombre.get()
         usuario = self.entry_usuario.get()
@@ -168,17 +159,19 @@ class Maestra:
 
         nuevo = Usuario(nombre, usuario, contra, "admin")
         try:
-            GestorUsuarios.insertar(nuevo)
+            GestorUsuarios.insertar_usuario(nuevo)
             messagebox.showinfo("Éxito", "Administrador creado correctamente.")
             self.cerrar_sesion()
         except sqlite3.IntegrityError:
             messagebox.showerror("Error", "El usuario ya existe.")
 
 
+
 class SubTrabajador:
 
-    def __init__(self, master, login_ref):
+    def __init__(self, master, login_ref, id_trabajador):
         self.login_ref = login_ref
+        self.id_trabajador = id_trabajador
         self.sub = tk.Toplevel(master)
         self.sub.title("TRABAJADOR")
         self.sub.geometry("800x600")
@@ -203,7 +196,7 @@ class SubTrabajador:
 
     def crear_frames(self):
         # Aquí defines los frames como si fueran pantallas
-        self.frames["aparato"] = AgregarAparato(self.contenido, self)
+        self.frames["aparato"] = AgregarAparato(self.contenido, self, self.id_trabajador)
         self.frames["cotizacion"] = Cotizacion(self.contenido, self)
         self.frames["historial"] = BuscarHistorial(self.contenido, self)
         self.frames["bodega"] = Bodega(self.contenido, self)
@@ -311,61 +304,141 @@ class SubAdmin:
             self.login_ref.ingreso_usuario.delete(0, tk.END)
             self.login_ref.ingreso_contra.delete(0, tk.END)
 
-class AgregarAparato(tk.Frame):
-    def __init__(self, master, ref_sub):
-        super().__init__(master, width=800, height=600)
-        self.ref_sub = ref_sub
-        self.pack_propagate(False)
-        canvas = tk.Canvas(self, width=800, height=600)
-        canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        titulo = tk.Label(self, text="AGREGAR APARATO", font=("Arial",14,"italic"), width=20, height=2)
-        canvas.create_window(350, 50, window=titulo)
-        dato_etiqueta = tk.Label(self, text="DATOS CLIENTE: ", font=("Arial", 14, "bold"), width=20, height=2)
-        canvas.create_window(100, 100, window=dato_etiqueta)
-        detalles_etiqueta = tk.Label(self, text=" DETALLES APARATO: ", font=("Arial", 14, "bold"), width=20, height=2)
-        canvas.create_window(100,350, window=detalles_etiqueta)
-        fecha_etiqueta = tk.Label(self, text=f"{fecha.strftime("%d/%m/%y")}", font=("Arial", 12, "bold"), bg="white",width=10, height=2)
-        canvas.create_window(620, 50, window=fecha_etiqueta)
-        caso_etiqueta = tk.Label(self, text="No. 0000", font=("Arial", 12, "bold"), bg="white", width=10, height=2)
-        canvas.create_window(700, 50, window=caso_etiqueta)
-        canvas.create_text(50, 150, text="NIT:", font=("Arial", 14, "italic"), fill="white")
-        canvas.create_text(200, 150, text="NOMBRE: ", font=("Arial", 14, "italic"), fill="white")
-        canvas.create_text(600, 150, text="CELULAR: ", font=("Arial", 14, "italic"), fill="white")
-        canvas.create_text(90, 250, text="DIRECCIÓN: ", font=("Arial", 14, "italic"), fill="white")
-        canvas.create_text(80, 400, text="MARCA: ", font=("Arial", 14, "italic"), fill="white")
-        canvas.create_text(250, 400, text="MODELO: ", font=("Arial", 14, "italic"), fill="white")
-        canvas.create_text(600, 400, text="TIPO DE APARATO: ", font=("Arial", 14, "italic"), fill="white")
-        canvas.create_text(80, 500, text="FALLA: ", font=("Arial", 14, "italic"), fill="white")
-        canvas.create_text(400, 500, text="SUBTOTAL: ", font=("Arial", 14, "bold"), fill="white")
-        nit = tk.Entry(self, font=("Arial", 12), bg="white",fg="black" ,width=12)
-        canvas.create_window(60, 175, window=nit)
-        nombre = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=40)
-        canvas.create_window(340, 175, window=nombre)
-        celular = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
-        canvas.create_window(630, 175, window=celular)
-        direccion = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=30)
-        canvas.create_window(140, 300, window=direccion)
-        marca = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
-        canvas.create_window(100, 450, window=marca)
-        modelo = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
-        canvas.create_window(280, 450, window=modelo)
-        falla = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
-        canvas.create_window(100, 550, window=falla)
-        aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
-        tipo_aparato = tk.StringVar() #Aqui se guardara que tipo de aparato selecciono el usuario
-        listado_aparatos = tk.OptionMenu(self, tipo_aparato, *aparatos_validos)
-        canvas.create_window(600, 450, window=listado_aparatos)
-        subTotal = tk.Label(self, text="Q.0", font=("Arial",12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
-        canvas.create_window(400, 550, window=subTotal)
-        cancelar_B = tk.Button(self, text="CANCELAR",font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
-        canvas.create_window(600, 575, window=cancelar_B)
-        aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"),command=self.aceptar ,bg="gray20", fg="white")
-        canvas.create_window(725, 575, window=aceptar_B)
 
-    def aceptar(self):
-        #Aqui el codigo que se ejecuta para guardar los datos
-        pass
+class AgregarAparato(tk.Frame):
+        def __init__(self, master, ref_sub, id_trabajador):
+            super().__init__(master)
+            self.config(width=800, height=600)
+            self.ref_sub = ref_sub
+            self.id_trabajador = id_trabajador
+            self.pack_propagate(False)
+
+            canvas = tk.Canvas(self, width=800, height=600)
+            canvas.pack(fill="both", expand=True)
+            aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+
+
+            canvas.create_text(350, 50, text="AGREGAR APARATO", font=("Arial", 14, "italic"))
+            canvas.create_text(100, 100, text="DATOS CLIENTE:", font=("Arial", 14, "bold"))
+            canvas.create_text(100, 350, text="DETALLES APARATO:", font=("Arial", 14, "bold"))
+            canvas.create_text(50, 150, text="NIT:", font=("Arial", 14, "italic"), fill="white")
+            canvas.create_text(200, 150, text="NOMBRE: ", font=("Arial", 14, "italic"), fill="white")
+            canvas.create_text(600, 150, text="CELULAR: ", font=("Arial", 14, "italic"), fill="white")
+            canvas.create_text(90, 250, text="DIRECCIÓN: ", font=("Arial", 14, "italic"), fill="white")
+            canvas.create_text(80, 400, text="MARCA: ", font=("Arial", 14, "italic"), fill="white")
+            canvas.create_text(250, 400, text="MODELO: ", font=("Arial", 14, "italic"), fill="white")
+            canvas.create_text(600, 400, text="TIPO DE APARATO: ", font=("Arial", 14, "italic"), fill="white")
+            canvas.create_text(80, 500, text="FALLA: ", font=("Arial", 14, "italic"), fill="white")
+            canvas.create_text(400, 500, text="SUBTOTAL: ", font=("Arial", 14, "bold"), fill="white")
+
+
+            fecha_actual = date.today().strftime("%d/%m/%y")
+            canvas.create_text(620, 50, text=fecha_actual, font=("Arial", 12, "bold"), fill="white")
+            self.caso_etiqueta = tk.Label(self, text="No. 0000", font=("Arial", 12, "bold"), bg="white", width=10)
+            canvas.create_window(700, 50, window=self.caso_etiqueta)
+
+            self.nit = tk.Entry(self, font=("Arial", 12), width=12)
+            canvas.create_window(60, 175, window=self.nit)
+            self.nit.bind("<FocusOut>", self.verificar_nit)
+
+            self.nombre = tk.Entry(self, font=("Arial", 12), width=40)
+            canvas.create_window(340, 175, window=self.nombre)
+
+            self.celular = tk.Entry(self, font=("Arial", 12), width=20)
+            canvas.create_window(630, 175, window=self.celular)
+
+            self.direccion = tk.Entry(self, font=("Arial", 12), width=30)
+            canvas.create_window(140, 300, window=self.direccion)
+
+            self.marca = tk.Entry(self, font=("Arial", 12), width=20)
+            canvas.create_window(100, 450, window=self.marca)
+
+            self.modelo = tk.Entry(self, font=("Arial", 12), width=15)
+            canvas.create_window(280, 450, window=self.modelo)
+
+            self.tipo_aparato = tk.StringVar()
+            aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
+            listado_aparatos = tk.OptionMenu(self, self.tipo_aparato, *aparatos_validos)
+            canvas.create_window(600, 450, window=listado_aparatos)
+
+            self.falla = tk.Entry(self, font=("Arial", 12), width=15)
+            canvas.create_window(100, 550, window=self.falla)
+
+            self.subTotal = tk.Label(self, text="Q.0", font=("Arial", 12, "bold"), width=15, highlightthickness=3,
+                                     highlightbackground="black")
+            canvas.create_window(400, 550, window=self.subTotal)
+
+            cancelar_B = tk.Button(self, text="CANCELAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu,
+                                   bg="gray20", fg="white")
+            canvas.create_window(600, 575, window=cancelar_B)
+
+            aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), command=self.aceptar, bg="gray20",
+                                  fg="white")
+            canvas.create_window(725, 575, window=aceptar_B)
+
+            self.actualizar_numero_caso()
+
+        def verificar_nit(self, event=None):
+            nit = self.nit.get().strip()
+            if not nit:
+                return
+            cliente = GestorCliente.buscar_por_nit(nit)
+            if cliente:
+                self.nombre.delete(0, tk.END)
+                self.nombre.insert(0, cliente["nombre"])
+                self.celular.delete(0, tk.END)
+                self.celular.insert(0, cliente["celular"])
+                self.direccion.delete(0, tk.END)
+                self.direccion.insert(0, cliente["direccion"])
+
+        def actualizar_numero_caso(self):
+            conn = BaseDB._conn()
+            cursor = conn.cursor()
+            cursor.execute("SELECT MAX(no_aparato) FROM aparatos")
+            resultado = cursor.fetchone()
+            conn.close()
+            siguiente = (resultado[0] or 0) + 1
+            self.caso_etiqueta.config(text=f"No. {siguiente:04}")
+
+        def aceptar(self):
+            nit = self.nit.get().strip()
+            nombre = self.nombre.get().strip()
+            celular = self.celular.get().strip()
+            direccion = self.direccion.get().strip()
+            marca = self.marca.get().strip()
+            modelo = self.modelo.get().strip()
+            tipo = self.tipo_aparato.get().strip()
+            falla = self.falla.get().strip()
+
+            if not all([nit, nombre, celular, direccion, marca, modelo, tipo, falla]):
+                messagebox.showwarning("Campos incompletos", "Por favor, completa todos los campos.")
+                return
+
+            if not GestorCliente.existe_cliente(nit):
+                cliente = Cliente(nit, nombre, celular, direccion)
+                GestorCliente.insertar_cliente(cliente)
+
+            aparato = Aparatos(marca, modelo, tipo, falla)
+            GestorAparatos.insertar_aparato(aparato, nit)
+
+            conn = BaseDB._conn()
+            cursor = conn.cursor()
+            cursor.execute("SELECT no_aparato FROM aparatos WHERE cliente_nit = ? ORDER BY no_aparato DESC LIMIT 1",
+                           (nit,))
+            resultado = cursor.fetchone()
+            conn.close()
+
+            if resultado:
+                no_aparato = resultado["no_aparato"]
+                fecha_actual = date.today().strftime("%Y-%m-%d")
+                estado = "pendiente"
+                registro = Registro(fecha_actual, nit, no_aparato, estado, self.id_trabajador)
+                GestorRegistros.insertar_registro(registro)
+                messagebox.showinfo("Éxito", "Aparato registrado correctamente.")
+                self.ref_sub.volver_menu()
+            else:
+                messagebox.showerror("Error", "No se pudo registrar el aparato.")
+
 
 class Cotizacion(tk.Frame):
     def __init__(self, master, ref_sub):
@@ -567,9 +640,6 @@ class Cobros(tk.Frame):
 
         boton_buscar = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
         canvas.create_window(370, 200, window=boton_buscar)
-
-
-
         aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
         canvas.create_window(730, 575, window=aceptar_B)
 
@@ -585,10 +655,10 @@ class Trabajador(tk.Frame):
         self.canvas.create_window(400, 50, window=titulo)
 
 
-        crear_trabajador = tk.Button(self, text="Crear Trabajador", font=("Arial",12, "bold"), bg="gray20", fg="white", width=20, height=2)
+        crear_trabajador = tk.Button(self, text="Crear Trabajador", font=("Arial",12, "bold"), command=lambda: VentanaCrearTrabajador(self), bg="gray20", fg="white", width=20, height=2)
         self.canvas.create_window(400, 200, window=crear_trabajador)
         self.canvas.create_text(400, 250, text="Agrega información de nuevos trabajadores", font=("Arial", 14, "bold"), fill="white")
-        listar_trabajador = tk.Button(self, text="Listar Trabajadores", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=20, height=2)
+        listar_trabajador = tk.Button(self, text="Listar Trabajadores", font=("Arial", 12, "bold"), command=lambda : VentanaListarTrabajadores(self), bg="gray20", fg="white", width=20, height=2)
         self.canvas.create_window(400,400, window=listar_trabajador)
         self.canvas.create_text(400, 450, text="Listado de todos los trabajadores contratados", font=("Arial", 14, "bold"), fill="white")
 
@@ -597,9 +667,171 @@ class Trabajador(tk.Frame):
 
 
 
+class VentanaCrearTrabajador:
+    def __init__(self, master):
+        self.vt = tk.Toplevel(master)
+        self.vt.title("Nuevo Trabajador")
+        self.vt.geometry("400x400")
+        self.vt.configure(bg="cadet blue")
 
+        tk.Label(self.vt, text="Nombre:", bg="white").pack(pady=5)
+        self.entry_nombre = tk.Entry(self.vt)
+        self.entry_nombre.pack(pady=5)
 
+        tk.Label(self.vt, text="Usuario:", bg="white").pack(pady=5)
+        self.entry_usuario = tk.Entry(self.vt)
+        self.entry_usuario.pack(pady=5)
 
+        tk.Label(self.vt, text="Contraseña:", bg="white").pack(pady=5)
+        self.entry_contra = tk.Entry(self.vt, show="*")
+        self.entry_contra.pack(pady=5)
 
+        tk.Label(self.vt, text="Rol:", bg="white").pack(pady=5)
+        self.combo_rol = ttk.Combobox(self.vt, values=["trabajador", "admin"])
+        self.combo_rol.set("trabajador")  # Valor por defecto
+        self.combo_rol.pack(pady=5)
 
+        tk.Button(self.vt, text="Guardar", command=self.guardar_trabajador, bg="RoyalBlue4", fg="white").pack(pady=20)
+
+    def guardar_trabajador(self):
+        nombre = self.entry_nombre.get()
+        usuario = self.entry_usuario.get()
+        contra = self.entry_contra.get()
+        rol = self.combo_rol.get()
+
+        if not nombre or not usuario or not contra or not rol:
+            messagebox.showwarning("Campos incompletos", "Por favor, llena todos los campos.")
+            return
+        nuevo = Usuario(nombre, usuario, contra, "trabajador")
+        if GestorUsuarios.validar_credenciales(usuario, contra):
+            messagebox.showerror("Error", "El usuario ya existe.")
+        else:
+            try:
+                GestorUsuarios.insertar_usuario(nuevo)
+                messagebox.showinfo("Éxito", "Trabajador creado correctamente.")
+                self.entry_nombre.delete(0, tk.END)
+                self.entry_usuario.delete(0, tk.END)
+                self.entry_contra.delete(0, tk.END)
+                self.vt.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo crear el trabajador:\n{e}")
+
+class VentanaListarTrabajadores:
+    def __init__(self, master):
+        self.lt = tk.Toplevel(master)
+        self.lt.title("Lista de Trabajadores")
+        self.lt.geometry("600x450")
+        self.lt.configure(bg="cadet blue")
+
+        tk.Label(self.lt, text="Trabajadores registrados", font=("Arial", 14, "bold"), bg="white").pack(pady=10)
+
+        self.tree = ttk.Treeview(self.lt, columns=("ID", "Nombre", "Usuario", "Rol"), show="headings")
+        self.tree.heading("ID", text="ID")
+        self.tree.heading("Nombre", text="Nombre")
+        self.tree.heading("Usuario", text="Usuario")
+        self.tree.heading("Rol", text="Rol")
+        self.tree.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.tree.bind("<Double-1>", self.editar_trabajador)
+        tk.Button(self.lt, text="Eliminar seleccionado", command=self.eliminar_trabajador, bg="red", fg="white").pack(pady=10)
+        self.cargar_trabajadores()
+
+    def cargar_trabajadores(self):
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, nombre, usuario, rol FROM usuarios WHERE rol = 'trabajador'")
+        trabajadores = cursor.fetchall()
+        conn.close()
+
+        for trabajador in trabajadores:
+            self.tree.insert("", "end", values=tuple(trabajador))
+
+    def eliminar_trabajador(self):
+        seleccionado = self.tree.selection()
+        if not seleccionado:
+            messagebox.showwarning("Seleccionar", "Selecciona un trabajador para eliminar.")
+            return
+
+        datos = self.tree.item(seleccionado)["values"]
+        id_trabajador = datos[0]
+
+        confirm = messagebox.askyesno("Confirmar", f"¿Eliminar al trabajador '{datos[2]}'?")
+        if confirm:
+            conn = BaseDB._conn()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM usuarios WHERE id = ?", (id_trabajador,))
+            conn.commit()
+            conn.close()
+            self.cargar_trabajadores()
+            messagebox.showinfo("Eliminado", "Trabajador eliminado correctamente.")
+
+    def editar_trabajador(self, event):
+        seleccionado = self.tree.selection()
+        if not seleccionado:
+            return
+
+        datos = self.tree.item(seleccionado)["values"]
+        VentanaEditarTrabajador(self.lt, datos, self.cargar_trabajadores)
+
+class VentanaEditarTrabajador:
+    def __init__(self, master, datos, refrescar_callback):
+        self.id_trabajador, nombre, usuario, rol = datos
+        self.refrescar_callback = refrescar_callback
+
+        self.root = tk.Toplevel(master)
+        self.root.title("Editar Trabajador")
+        self.root.geometry("400x400")
+        self.root.configure(bg="white")
+
+        tk.Label(self.root, text="Nombre:", bg="white").pack(pady=5)
+        self.entry_nombre = tk.Entry(self.root)
+        self.entry_nombre.insert(0, nombre)
+        self.entry_nombre.pack(pady=5)
+
+        tk.Label(self.root, text="Usuario:", bg="white").pack(pady=5)
+        self.entry_usuario = tk.Entry(self.root)
+        self.entry_usuario.insert(0, usuario)
+        self.entry_usuario.pack(pady=5)
+
+        tk.Label(self.root, text="Nueva Contraseña:", bg="white").pack(pady=5)
+        self.entry_contra = tk.Entry(self.root, show="*")
+        self.entry_contra.pack(pady=5)
+
+        tk.Label(self.root, text="Rol:", bg="white").pack(pady=5)
+        self.combo_rol = ttk.Combobox(self.root, values=["trabajador", "admin", "dev"])
+        self.combo_rol.set(rol)
+        self.combo_rol.pack(pady=5)
+
+        tk.Button(self.root, text="Guardar cambios", command=self.guardar_cambios, bg="RoyalBlue4", fg="white").pack(pady=20)
+
+    def guardar_cambios(self):
+        nombre = self.entry_nombre.get()
+        usuario = self.entry_usuario.get()
+        contra = self.entry_contra.get()
+        rol = self.combo_rol.get()
+
+        if not nombre or not usuario or not rol:
+            messagebox.showwarning("Campos incompletos", "Por favor, llena todos los campos.")
+            return
+
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+
+        if contra:
+            cursor.execute("""
+                UPDATE usuarios SET nombre = ?, usuario = ?, contra = ?, rol = ? WHERE id = ?
+            """, (nombre, usuario, contra, rol, self.id_trabajador))
+        else:
+            cursor.execute("""
+                UPDATE usuarios SET nombre = ?, usuario = ?, rol = ? WHERE id = ?
+            """, (nombre, usuario, rol, self.id_trabajador))
+
+        conn.commit()
+        conn.close()
+        messagebox.showinfo("Actualizado", "Datos actualizados correctamente.")
+        self.refrescar_callback()
+        self.root.destroy()
 
