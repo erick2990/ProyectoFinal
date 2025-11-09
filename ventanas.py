@@ -6,6 +6,10 @@ from tkinter import messagebox, ttk
 import calendar
 from control_db import Usuario, GestorUsuarios, BaseDB
 from control_db import GestorCliente, GestorAparatos, GestorRegistros, Cliente, Usuario, Aparatos, Registro
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas as pdf_canvas
+import os
+
 fecha = date.today()
 
 
@@ -467,34 +471,73 @@ class Cotizacion(tk.Frame):
         canvas.create_text(600, 400, text="TIPO DE APARATO: ", font=("Arial", 14, "italic"), fill="white")
         canvas.create_text(80, 500, text="FALLA: ", font=("Arial", 14, "italic"), fill="white")
         canvas.create_text(400, 500, text="SUBTOTAL: ", font=("Arial", 14, "bold"), fill="white")
-        nit = tk.Entry(self, font=("Arial", 12), bg="white",fg="black" ,width=12)
-        canvas.create_window(60, 175, window=nit)
-        nombre = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=40)
-        canvas.create_window(340, 175, window=nombre)
-        celular = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
-        canvas.create_window(630, 175, window=celular)
-        direccion = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=30)
-        canvas.create_window(140, 300, window=direccion)
-        marca = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
-        canvas.create_window(100, 450, window=marca)
-        modelo = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
-        canvas.create_window(280, 450, window=modelo)
-        falla = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
-        canvas.create_window(100, 550, window=falla)
+        self.nit = tk.Entry(self, font=("Arial", 12), bg="white",fg="black" ,width=12)
+        canvas.create_window(60, 175, window=self.nit)
+        self.nombre = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=40)
+        canvas.create_window(340, 175, window=self.nombre)
+        self.celular = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
+        canvas.create_window(630, 175, window=self.celular)
+        self.direccion = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=30)
+        canvas.create_window(140, 300, window=self.direccion)
+        self.marca = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=20)
+        canvas.create_window(100, 450, window=self.marca)
+        self.modelo = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
+        canvas.create_window(280, 450, window=self.modelo)
+        self.falla = tk.Entry(self, font=("Arial", 12), bg="white", fg="black", width=15)
+        canvas.create_window(100, 550, window=self.falla)
         aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
-        tipo_aparato = tk.StringVar() #Aqui se guardara que tipo de aparato selecciono el usuario
-        listado_aparatos = tk.OptionMenu(self, tipo_aparato, *aparatos_validos)
+        self.tipo_aparato = tk.StringVar() #Aqui se guardara que tipo de aparato selecciono el usuario
+        listado_aparatos = tk.OptionMenu(self, self.tipo_aparato, *aparatos_validos)
         canvas.create_window(600, 450, window=listado_aparatos)
-        subTotal = tk.Label(self, text="Q.0", font=("Arial",12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
-        canvas.create_window(400, 550, window=subTotal)
+        self.subTotal = tk.Label(self, text="Q.0", font=("Arial",12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
+        canvas.create_window(400, 550, window=self.subTotal)
         cancelar_B = tk.Button(self, text="CANCELAR",font=("Arial", 12, "bold"), command= self.ref_sub.volver_menu, bg="gray20", fg="white")
         canvas.create_window(590, 575, window=cancelar_B)
         generar_pdf = tk.Button(self, text="GENERAR PDF", font=("Arial", 12, "bold"),command=self.pdf ,bg="gray20", fg="white")
         canvas.create_window(730, 575, window=generar_pdf)
 
     def pdf(self):
-        #Aqui el codigo que se ejecuta para guardar los datos
-        pass
+        # Obtener datos
+        nit = self.nit.get().strip()
+        nombre = self.nombre.get().strip()
+        celular = self.celular.get().strip()
+        direccion = self.direccion.get().strip()
+        marca = self.marca.get().strip()
+        modelo = self.modelo.get().strip()
+        tipo = self.tipo_aparato.get().strip()
+        falla = self.falla.get().strip()
+        subtotal = self.subTotal.cget("text")
+
+        if not all([nit, nombre, celular, direccion, marca, modelo, tipo, falla]):
+            messagebox.showwarning("Campos incompletos", "Por favor, completa todos los campos.")
+            return
+
+        nombre_archivo = f"Cotizacion_{nit}_{modelo}.pdf"
+        ruta = os.path.join(os.getcwd(), nombre_archivo)
+        pdf = pdf_canvas.Canvas(ruta, pagesize=letter)
+        pdf.setTitle("Cotización de Reparación")
+
+        pdf.setFont("Helvetica-Bold", 16)
+        pdf.drawString(200, 750, "Cotización de Reparación")
+
+        pdf.setFont("Helvetica", 12)
+        pdf.drawString(50, 700, f"NIT: {nit}")
+        pdf.drawString(50, 680, f"Nombre: {nombre}")
+        pdf.drawString(50, 660, f"Celular: {celular}")
+        pdf.drawString(50, 640, f"Dirección: {direccion}")
+
+        pdf.drawString(50, 600, f"Marca: {marca}")
+        pdf.drawString(50, 580, f"Modelo: {modelo}")
+        pdf.drawString(50, 560, f"Tipo de aparato: {tipo}")
+        pdf.drawString(50, 540, f"Falla reportada: {falla}")
+
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(50, 500, f"Subtotal estimado: {subtotal}")
+
+        pdf.save()
+        messagebox.showinfo("PDF generado", f"Cotización guardada como:\n{nombre_archivo}")
+        self.ref_sub.volver_menu()
+
 
 class BuscarHistorial(tk.Frame):
     def __init__(self, master, ref_sub):
