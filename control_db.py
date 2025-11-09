@@ -35,7 +35,7 @@ class GestorUsuarios(BaseDB):
                   nombre TEXT NOT NULL,
                   usuario TEXT UNIQUE NOT NULL,
                   contra TEXT NOT NULL,
-                  rol TEXT CHECK(rol IN ('admin', 'trabajador')) NOT NULL
+                  rol TEXT NOT NULL CHECK(rol IN ('admin', 'trabajador', 'dev')) 
               )
           """)
         conn.commit()
@@ -52,13 +52,13 @@ class GestorUsuarios(BaseDB):
         conn.commit()
         conn.close()
     @staticmethod
-    def validar_login(usuario, contra):
+    def validar_credenciales(usuario, contra):
         conn = BaseDB._conn()
         cursor = conn.cursor()
         cursor.execute("""
             SELECT * FROM usuarios WHERE usuario = ? AND contra = ?
         """, (usuario, contra))
-        resultados = cursor.fetchall()
+        resultados = cursor.fetchone()
         conn.close()
         return resultados
 
@@ -188,7 +188,7 @@ class GestorAparatos(BaseDB):
         cursor = conn.cursor()
         cursor.execute("""
                CREATE TABLE IF NOT EXISTS aparatos(
-                no_aparato INTEGER PRIMARY KEY AUTOINCREMENT
+                no_aparato INTEGER PRIMARY KEY AUTOINCREMENT,
                 marca TEXT NOT NULL,
                 modelo TEXT NOT NULL,
                 tipo TEXT NOT NULL,
@@ -196,7 +196,7 @@ class GestorAparatos(BaseDB):
                 cliente_nit TEXT NOT NULL,
                 FOREIGN KEY(cliente_nit) REFERENCES clientes(nit) ON DELETE CASCADE
                 )
-                """)
+        """)
 
     @staticmethod
     def insertar_aparato(aparato: Aparatos, cliente_nit: str):

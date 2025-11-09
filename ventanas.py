@@ -10,6 +10,13 @@ from oauthlib.uri_validate import hier_part
 from pygments import highlight
 fecha = date.today()
 
+admin_maestro = Usuario("Administrador", "Erick", "1234", "dev")
+GestorUsuarios.insertar_usuario(admin_maestro)
+try:
+    GestorUsuarios.insertar_usuario(admin_maestro)
+except Exception as e:
+    print('Error')
+
 def aplicar_logo(canvas, ruta_logo):
     logo = Image.open(ruta_logo).convert("RGBA")
     logo = logo.resize((800, 600))
@@ -59,21 +66,31 @@ class Login:
     def validar(self):
         usuario = self.ingreso_usuario.get()
         contra = self.ingreso_contra.get()
-        # Simulación de validación
+        #if usuario == "admin" and contra == "1234":
+        #    self.root.withdraw()
+        #    Maestra(self.root, self)
         if not usuario or not contra:
-            tk.messagebox.showwarning("Campos vacíos", "Por favor, completa todos los campos antes de continuar.")
+            messagebox.showwarning("Campos vacíos", "Por favor, completa todos los campos antes de continuar.")
             return
-        if usuario == "admin" and contra == "1234":
+
+        resultado = GestorUsuarios.validar_credenciales(usuario, contra)
+
+        if resultado:
+            rol = resultado["rol"]
             self.root.withdraw()
-            Maestra(self.root, self)
-            #SubAdmin(self.root, self)
-        elif usuario == "erick" and contra == "1234":
-            self.root.withdraw()
-            SubTrabajador(self.root, self)
+            if rol == "admin":
+                SubAdmin(self.root, self)
+            elif rol == "dev":
+                Maestra(self.root, self)
+            elif rol == "trabajador":
+                SubTrabajador(self.root, self)
+            else:
+                messagebox.showinfo("Acceso", f"Rol no reconocido: {rol}")
         else:
-            tk.messagebox.showerror("Error", "Credenciales incorrectas")
+            messagebox.showerror("Error", "Credenciales incorrectas")
             self.ingreso_usuario.delete(0, tk.END)
             self.ingreso_contra.delete(0, tk.END)
+
 
     def run(self):
         self.root.mainloop()
