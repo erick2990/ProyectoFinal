@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 from datetime import date
 from tkinter import messagebox, ttk
 import calendar
-from control_db import Usuario, GestorUsuarios, BaseDB
+from control_db import Usuario, GestorUsuarios, BaseDB, GestorCobros
 from control_db import GestorCliente, GestorAparatos, GestorRegistros, Cliente, Usuario, Aparatos, Registro
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as pdf_canvas
@@ -193,6 +193,8 @@ class SubTrabajador:
         self.canvas.create_window(400, 200 , window=cotizar_B)
         consulta_B = tk.Button(self.sub, text="CONSULTA DE\nREPARACIONES", font=("Arial", 14, "bold"),command=self.mostrar_historial,highlightthickness=3, highlightbackground="dark slate gray", bg="gray20", fg="white")
         self.canvas.create_window(685,200, window=consulta_B)
+        cobro_B = tk.Button(self.sub, text="COBRAR", font=("Arial", 14, "bold"), command=self.mostrar_cobro,highlightthickness=3, highlightbackground="dark slate gray", bg="gray20", fg="white", width=10, height=2 )
+        self.canvas.create_window(100, 300, window=cobro_B)
         bodega_B = tk.Button(self.sub, text="BODEGA", font=("Arial", 14, "bold"), command=self.mostrar_bodega, highlightthickness=3, highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
         self.canvas.create_window(400, 300, window=bodega_B)
         cerrar_B = tk.Button(self.sub, text="CERRAR SESIÓN", font=("Arial", 14, "bold"),command=self.cerrar_sesion, highlightthickness="3", highlightbackground="dark slate gray", width=15, height=2, bg="gray20", fg="white")
@@ -204,6 +206,7 @@ class SubTrabajador:
         self.frames["cotizacion"] = Cotizacion(self.contenido, self)
         self.frames["historial"] = BuscarHistorial(self.contenido, self)
         self.frames["bodega"] = Bodega(self.contenido, self)
+        self.frames["cobro"] = Cobro(self.contenido, self)
 
     def mostrar_frame(self, nombre):
         self.canvas.pack_forget() #oculta el canvas
@@ -229,6 +232,9 @@ class SubTrabajador:
 
     def mostrar_bodega(self):
         self.mostrar_frame("bodega")
+
+    def mostrar_cobro(self):
+        self.mostrar_frame("cobro")
 
     def cerrar_sesion(self):
         self.sub.destroy()
@@ -273,7 +279,7 @@ class SubAdmin:
         self.frames["historial"] = BuscarHistorial(self.contenido, self)
         self.frames["bodega"] = Bodega(self.contenido, self)
         self.frames["clientes"] = Clientes(self.contenido, self)
-        self.frames["cobros"] = Cobros(self.contenido, self)
+        self.frames["cobros"] = Cobro(self.contenido, self)
 
     def mostrar_frame(self, nombre):
         self.canvas.pack_forget()
@@ -368,9 +374,9 @@ class AgregarAparato(tk.Frame):
             self.falla = tk.Entry(self, font=("Arial", 12), width=15)
             canvas.create_window(100, 550, window=self.falla)
 
-            self.subTotal = tk.Label(self, text="Q.0", font=("Arial", 12, "bold"), width=15, highlightthickness=3,
-                                     highlightbackground="black")
+            self.subTotal = tk.Entry(self,  font=("Arial", 12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
             canvas.create_window(400, 550, window=self.subTotal)
+
 
             cancelar_B = tk.Button(self, text="CANCELAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu,
                                    bg="gray20", fg="white")
@@ -395,6 +401,7 @@ class AgregarAparato(tk.Frame):
                 self.direccion.delete(0, tk.END)
                 self.direccion.insert(0, cliente["direccion"])
 
+
         def actualizar_numero_caso(self):
             conn = BaseDB._conn()
             cursor = conn.cursor()
@@ -413,6 +420,7 @@ class AgregarAparato(tk.Frame):
             modelo = self.modelo.get().strip()
             tipo = self.tipo_aparato.get().strip()
             falla = self.falla.get().strip()
+            subtotal = float(self.subTotal.get().strip()) if self.subTotal.get().strip().replace(".", "").isdigit() else 0.0
 
             if not all([nit, nombre, celular, direccion, marca, modelo, tipo, falla]):
                 messagebox.showwarning("Campos incompletos", "Por favor, completa todos los campos.")
@@ -424,7 +432,6 @@ class AgregarAparato(tk.Frame):
 
             aparato = Aparatos(marca, modelo, tipo, falla)
             GestorAparatos.insertar_aparato(aparato, nit)
-
             conn = BaseDB._conn()
             cursor = conn.cursor()
             cursor.execute("SELECT no_aparato FROM aparatos WHERE cliente_nit = ? ORDER BY no_aparato DESC LIMIT 1",
@@ -436,10 +443,17 @@ class AgregarAparato(tk.Frame):
                 no_aparato = resultado["no_aparato"]
                 fecha_actual = date.today().strftime("%Y-%m-%d")
                 estado = "pendiente"
-                registro = Registro(fecha_actual, nit, no_aparato, estado, self.id_trabajador)
+                registro = Registro(fecha_actual, nit, no_aparato, estado, self.id_trabajador, subtotal)
                 GestorRegistros.insertar_registro(registro)
-                messagebox.showinfo("Éxito", "Aparato registrado correctamente.")
+                messagebox.showinfo("Éxito", "Aparato registrado correctamente.", parent=self)
                 self.ref_sub.volver_menu()
+                self.nit.delete(0, tk.END)
+                self.nombre.delete(0, tk.END)
+                self.celular.delete(0, tk.END)
+                self.direccion.delete(0, tk.END)
+                self.marca.delete(0, tk.END)
+                self.modelo.delete(0, tk.END)
+                self.falla.delete(0, tk.END)
             else:
                 messagebox.showerror("Error", "No se pudo registrar el aparato.")
 
@@ -489,7 +503,7 @@ class Cotizacion(tk.Frame):
         self.tipo_aparato = tk.StringVar() #Aqui se guardara que tipo de aparato selecciono el usuario
         listado_aparatos = tk.OptionMenu(self, self.tipo_aparato, *aparatos_validos)
         canvas.create_window(600, 450, window=listado_aparatos)
-        self.subTotal = tk.Label(self, text="Q.0", font=("Arial",12, "bold"), width=15, highlightthickness=3, highlightbackground="black")
+        self.subTotal = tk.Entry(self, font=("Arial", 12, "bold"), width=15, highlightthickness=3,highlightbackground="black")
         canvas.create_window(400, 550, window=self.subTotal)
         cancelar_B = tk.Button(self, text="CANCELAR",font=("Arial", 12, "bold"), command= self.ref_sub.volver_menu, bg="gray20", fg="white")
         canvas.create_window(590, 575, window=cancelar_B)
@@ -506,7 +520,8 @@ class Cotizacion(tk.Frame):
         modelo = self.modelo.get().strip()
         tipo = self.tipo_aparato.get().strip()
         falla = self.falla.get().strip()
-        subtotal = self.subTotal.cget("text")
+        subtotal = self.subTotal.get().strip()
+        subtotal = float(subtotal) if subtotal.replace(".", "").isdigit() else 0.0
 
         if not all([nit, nombre, celular, direccion, marca, modelo, tipo, falla]):
             messagebox.showwarning("Campos incompletos", "Por favor, completa todos los campos.")
@@ -549,11 +564,11 @@ class BuscarHistorial(tk.Frame):
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
         titulo = tk.Label(self, text="BÚSQUEDA POR NO. DE REFERENCIA:",font=("Arial", 14, "italic"),  width=50, height=2)
         canvas.create_window(400, 100, window=titulo)
-        referencia = tk.Entry(self, font=("Arial", 12, "bold"))
-        canvas.create_window(300, 200, window=referencia)
-        buscar_B = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
+        self.referencia = tk.Entry(self, font=("Arial", 12, "bold"))
+        canvas.create_window(300, 200, window=self.referencia)
+        buscar_B = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"), command= self.buscar, bg="Slategray4", fg="black")
         canvas.create_window(500, 175, window=buscar_B)
-        limpiar_B = tk.Button(self, text="LIMPIAR ", font=("Arial", 12, "bold"), bg="Slategray4", fg="black")
+        limpiar_B = tk.Button(self, text="LIMPIAR ", font=("Arial", 12, "bold"), command= self.limpiar, bg="Slategray4", fg="black")
         canvas.create_window(500, 225, window=limpiar_B)
         canvas.create_rectangle(100, 275, 700,500, fill="white", outline="black")
         canvas.create_text(200, 300, text="DATOS CLIENTE:", font=("Arial", 12, "bold"))
@@ -562,45 +577,133 @@ class BuscarHistorial(tk.Frame):
         canvas.create_text(550, 400, text="ESTADO: ", font=("Arial", 12, "bold"))
         canvas.create_text(200, 400, text="ATENDIDO POR:", font=("Arial", 12, "bold"))
         canvas.create_text(550, 450, text="TOTAL: ", font=("Arial",12, "bold"))
+        self.datos_cliente = tk.Label(self, text="", font=("Arial", 12), bg="white")
+        canvas.create_window(200, 320, window=self.datos_cliente)
+        self.fecha = tk.Label(self, text="", font=("Arial", 12), bg="white")
+        canvas.create_window(550, 320, window=self.fecha)
+        self.datos_aparato = tk.Label(self, text="", font=("Arial", 12), bg="white")
+        canvas.create_window(200, 370, window=self.datos_aparato)
+        self.estado = tk.Label(self, text="", font=("Arial", 12), bg="white")
+        canvas.create_window(550, 420, window=self.estado)
+        self.trabajador = tk.Label(self, text="", font=("Arial", 12), bg="white")
+        canvas.create_window(200, 420, window=self.trabajador)
+        self.total = tk.Label(self, text="", font=("Arial", 12), bg="white")
+        canvas.create_window(550, 470, window=self.total)
         cancelar_B = tk.Button(self, text="CANCELAR", font=("Arial", 12, "bold"), command=  self.ref_sub.volver_menu,bg="gray20", fg="white")
         canvas.create_window(590, 575, window=cancelar_B)
         aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
         canvas.create_window(730, 575, window=aceptar_B)
 
+    def buscar(self):
+        ref = self.referencia.get().strip()
+        if not ref.isdigit():
+            messagebox.showwarning("Referencia inválida", "Ingresa un número de referencia válido.")
+            return
+
+        resultado = GestorRegistros.buscar_por_referencia(int(ref))
+        if resultado:
+            self.datos_cliente.config(text=f"{resultado['nombre_cliente']} - {resultado['celular']}")
+            self.fecha.config(text=resultado['fecha'])
+            self.datos_aparato.config(
+                text=f"{resultado['marca']} {resultado['modelo']} ({resultado['tipo']}) - {resultado['falla']}")
+            self.estado.config(text=resultado['estado'])
+            self.trabajador.config(text=resultado['nombre_trabajador'])
+            self.total.config(text=f"Q.{resultado['total']:.2f}")
+
+        else:
+            messagebox.showinfo("Sin resultados", "No se encontró ningún registro con esa referencia.", parent = self)
+
+    def limpiar(self):
+        self.referencia.delete(0, tk.END)
+        self.datos_cliente.config(text="")
+        self.fecha.config(text="")
+        self.datos_aparato.config(text="")
+        self.estado.config(text="")
+        self.trabajador.config(text="")
+        self.total.config(text="")
+
 
 class Bodega(tk.Frame):
     def __init__(self, master, ref_sub):
-        super().__init__(master, width=800, height=600)
+        super().__init__(master)
         self.ref_sub = ref_sub
+        self.config(width=800, height=600)
         self.pack_propagate(False)
+
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
         aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        titulo = tk.Label(self, text="BODEGA:", font=("Arial", 14, "italic"), width=50,height=2)
-        canvas.create_window(400, 50, window=titulo)
-        modelo_entrada = tk.Entry(self, font=("Arial", 14, "bold"))
-        canvas.create_window(250, 95, window=modelo_entrada)
-        aparatos_validos = ["Televisor", "Radio", "Teatro en casa", "Herramienta", "Baterías"]
-        tipo_aparato = tk.StringVar()
-        aparato_entrada = tk.OptionMenu(self, tipo_aparato, *aparatos_validos)
-        canvas.create_window(250, 130, window=aparato_entrada)
-        buscar_B = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"),bg="Slategray4", fg="black", width=15, height=2)
-        canvas.create_window(550, 110, window=buscar_B)
-        canvas.create_rectangle(50, 150, 750, 550, fill="white", outline="gray")
-        scrollbar = tk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        scrollbar.pack(side="right", fill="y")
-        canvas.configure(yscrollcommand=scrollbar.set)
-        contenedor = tk.Frame(canvas, bg="white")
-        canvas_window = canvas.create_window((50, 200), window=contenedor, anchor="nw")
-        def on_configure(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))
-            canvas.itemconfig(canvas_window, width=700)  # Ajusta ancho del frame
-        contenedor.bind("<Configure>", on_configure)
-        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
-        cancelar_B = tk.Button(self, text="CANCELAR", font=("Arial", 12, "bold"),command= self.ref_sub.volver_menu, bg="gray20", fg="white")
-        canvas.create_window(590, 575, window=cancelar_B)
-        aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"),bg="gray20", fg="white")
-        canvas.create_window(730, 575, window=aceptar_B)
+
+        canvas.create_text(400, 50, text="BODEGA DE APARATOS", font=("Arial", 14, "italic"))
+
+        # Entradas de búsqueda
+        canvas.create_text(120, 120, text="Modelo:", font=("Arial", 12, "bold"), fill="white")
+        self.entry_modelo = tk.Entry(self, font=("Arial", 12), width=20)
+        canvas.create_window(250, 120, window=self.entry_modelo)
+
+        canvas.create_text(400, 120, text="Tipo:", font=("Arial", 12, "bold"), fill="white")
+        self.entry_tipo = tk.Entry(self, font=("Arial", 12), width=20)
+        canvas.create_window(550, 120, window=self.entry_tipo)
+
+        buscar_B = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"), command=self.buscar_aparatos,
+                             bg="Slategray4", fg="black")
+        canvas.create_window(250, 160, window=buscar_B)
+
+        limpiar_B = tk.Button(self, text="LIMPIAR", font=("Arial", 12, "bold"), command=self.limpiar_campos,
+                              bg="Slategray4", fg="black")
+        canvas.create_window(550, 160, window=limpiar_B)
+
+        # Tabla
+        self.tree = ttk.Treeview(self, columns=("ID", "Marca", "Modelo", "Tipo", "Falla", "Cliente"), show="headings")
+        for col in self.tree["columns"]:
+            self.tree.heading(col, text=col)
+        self.tree.place(x=50, y=200, width=700, height=250)
+
+        # Botón eliminar
+        eliminar_B = tk.Button(self, text="ELIMINAR", font=("Arial", 12, "bold"), command=self.eliminar_aparato,
+                               bg="red", fg="white")
+        canvas.create_window(400, 470, window=eliminar_B)
+
+        # Botón volver
+        volver_B = tk.Button(self, text="VOLVER", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu,
+                             bg="gray20", fg="white")
+        canvas.create_window(730, 575, window=volver_B)
+
+        self.cargar_aparatos()
+
+    def cargar_aparatos(self):
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        aparatos = GestorAparatos.listar_aparatos()
+        for aparato in aparatos:
+            self.tree.insert("", "end", values=tuple(aparato))
+
+    def buscar_aparatos(self):
+        modelo = self.entry_modelo.get().strip()
+        tipo = self.entry_tipo.get().strip()
+        resultados = GestorAparatos.buscar_por_modelo_tipo(modelo, tipo)
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        for aparato in resultados:
+            self.tree.insert("", "end", values=tuple(aparato))
+
+    def limpiar_campos(self):
+        self.entry_modelo.delete(0, tk.END)
+        self.entry_tipo.delete(0, tk.END)
+        self.cargar_aparatos()
+
+    def eliminar_aparato(self):
+        seleccionado = self.tree.selection()
+        if not seleccionado:
+            messagebox.showwarning("Seleccionar", "Selecciona un aparato para eliminar.", parent=self)
+            return
+        datos = self.tree.item(seleccionado)["values"]
+        no_aparato = datos[0]
+        confirm = messagebox.askyesno("Confirmar", f"¿Eliminar el aparato '{datos[2]}'?", parent=self)
+        if confirm:
+            GestorAparatos.borrar_aparato(no_aparato)
+            self.cargar_aparatos()
+            messagebox.showinfo("Eliminado", "Aparato eliminado correctamente.", parent=self)
 
 
 class Clientes(tk.Frame):
@@ -614,77 +717,107 @@ class Clientes(tk.Frame):
         #buscar por nombre, nit o telefono
         titulo = tk.Label(self, text="BUSCAR CLIENTES: ", font=("Arial", 14, "italic"), width=50, height=2)
         canvas.create_window(400, 50, window=titulo)
-        buscar_nombreB = tk.Button(self, text="Nombre", font=("Arial", 12, "bold"),bg="gray20", fg="white", width=10, height=2 )
+        buscar_nombreB = tk.Button(self, text="Nombre", font=("Arial", 12, "bold"), command=self.buscar_por_nombre,bg="gray20", fg="white", width=10, height=2 )
         canvas.create_window(400, 150, window=buscar_nombreB)
-        buscar_nitB = tk.Button(self, text="NIT", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=10, height=2)
+        buscar_nitB = tk.Button(self, text="NIT", font=("Arial", 12, "bold"), command=self.buscar_por_nit, bg="gray20", fg="white", width=10, height=2)
         canvas.create_window(500, 150, window=buscar_nitB)
-        buscar_telefonoB = tk.Button(self, text="Teléfono", font=("Arial", 12, "bold"), bg="gray20", fg="white", width=10, height=2)
+        buscar_telefonoB = tk.Button(self, text="Teléfono", font=("Arial", 12, "bold"), command=self.buscar_por_telefono, bg="gray20", fg="white", width=10, height=2)
         canvas.create_window(600, 150, window=buscar_telefonoB)
-        entrada = tk.Entry(self, font=("Arial", 12, "bold"))
-        canvas.create_window(245,150, window=entrada)
+        self.entrada = tk.Entry(self, font=("Arial", 12, "bold"))
+        canvas.create_window(245,150, window=self.entrada)
         aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
         canvas.create_window(730, 575, window=aceptar_B)
+        limpiar_B = tk.Button(self, text="LIMPIAR", font=("Arial", 12, "bold"), command=self.limpiar, bg="gray20", fg="white")
+        canvas.create_window(600, 575, window=limpiar_B)
+
+        self.tree = ttk.Treeview(self, columns=("NIT", "Nombre", "Celular", "Dirección"), show="headings")
+        for col in self.tree["columns"]:
+            self.tree.heading(col, text=col)
+        self.tree.place(x=50, y=200, width=700, height=300)
+
+    def buscar_por_nombre(self):
+        nombre = self.entrada.get().strip()
+        resultados = GestorCliente.buscar_por_nombre(nombre)
+        self.mostrar_resultados(resultados)
+
+    def buscar_por_nit(self):
+        nit = self.entrada.get().strip()
+        resultados = GestorCliente.buscar_por_nit(nit)
+        self.mostrar_resultados([resultados] if resultados else [])
+
+    def buscar_por_telefono(self):
+        telefono = self.entrada.get().strip()
+        resultados = GestorCliente.buscar_por_telefono(telefono)
+        self.mostrar_resultados(resultados)
+
+    def mostrar_resultados(self, resultados):
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        for cliente in resultados:
+            self.tree.insert("", "end", values=(cliente["nit"], cliente["nombre"], cliente["celular"], cliente["direccion"]))
+
+    def limpiar(self):
+        self.entrada.delete(0, tk.END)
+        for row in self.tree.get_children():
+            self.tree.delete(row)
 
 
-class Cobros(tk.Frame):
+class Cobro(tk.Frame):
     def __init__(self, master, ref_sub):
-        super().__init__(master, width=800, height=600)
+        super().__init__(master)
         self.ref_sub = ref_sub
+        self.config(width=800, height=600)
         self.pack_propagate(False)
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas,"/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-        titulo = tk.Label(self, text="BUSQUEDA COBROS: ", font=("Arial", 14, "italic"), width=50, height=2)
-        canvas.create_window(400, 50, window=titulo)
+        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        canvas.create_text(400, 50, text="REALIZAR COBRO", font=("Arial", 14, "italic"))
+        canvas.create_text(100, 120, text="Referencia:", font=("Arial", 12, "bold"), fill="white")
+        self.entry_ref = tk.Entry(self, font=("Arial", 12), width=20)
+        canvas.create_window(250, 120, window=self.entry_ref)
+        buscar_B = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"), command=self.buscar, bg="Slategray4", fg="black")
+        canvas.create_window(450, 120, window=buscar_B)
+        self.info_cliente = tk.Label(self, text="", font=("Arial", 12), bg="white", width=50)
+        canvas.create_window(400, 180, window=self.info_cliente)
+        self.info_aparato = tk.Label(self, text="", font=("Arial", 12), bg="white", width=50)
+        canvas.create_window(400, 220, window=self.info_aparato)
+        self.info_estado = tk.Label(self, text="", font=("Arial", 12), bg="white", width=50)
+        canvas.create_window(400, 260, window=self.info_estado)
+        canvas.create_text(100, 320, text="Monto Q:", font=("Arial", 12, "bold"), fill="white")
+        self.entry_monto = tk.Entry(self, font=("Arial", 12), width=20)
+        canvas.create_window(250, 320, window=self.entry_monto)
+        cobrar_B = tk.Button(self, text="COBRAR", font=("Arial", 12, "bold"), command=self.cobrar, bg="green", fg="white")
+        canvas.create_window(450, 320, window=cobrar_B)
+        volver_B = tk.Button(self, text="VOLVER", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
+        canvas.create_window(730, 575, window=volver_B)
 
-        def actualizar_dias_desde(event):
-            mes = meses.current() + 1
-            year = int(anio.get())
-            dias = [str(i) for i in range(1, calendar.monthrange(year, mes)[1] + 1)]
-            dias_desde.config(values=dias)
-            dias_desde.set("Día")
+    def buscar(self):
+        ref = self.entry_ref.get().strip()
+        if not ref.isdigit():
+            messagebox.showwarning("Referencia inválida", "Ingresa un número válido.", parent=self)
+            return
 
-        etiqueta_desde = tk.Label(self, text="Desde:", font=("Arial", 14, "bold"), width=10, height=2)
-        canvas.create_window(100, 100,window=etiqueta_desde)
-        #Calendario para el desde
-        anio = ttk.Combobox(self, values=[str(y) for y in range(2020, 2031)], width=6)
-        anio.set("2025")
-        canvas.create_window(80, 150, window=anio)
-        meses = ttk.Combobox(self, values=list(calendar.month_name[1:]), width=10)
-        meses.set("Mes")
-        meses.bind("<<ComboboxSelected>>", actualizar_dias_desde)
-        canvas.create_window(160, 150, window=meses)
-        dias_desde = ttk.Combobox(self, values=[], width=5)
-        dias_desde.set("Día")
-        canvas.create_window(235, 150, window=dias_desde)
+        resultado = GestorRegistros.buscar_por_referencia(int(ref))
+        if resultado:
+            self.info_cliente.config(text=f"Cliente: {resultado['nombre_cliente']} - {resultado['celular']}")
+            self.info_aparato.config(text=f"Aparato: {resultado['marca']} {resultado['modelo']} ({resultado['tipo']})")
+            self.info_estado.config(text=f"Estado actual: {resultado['estado']}")
+        else:
+            messagebox.showinfo("Sin resultados", "No se encontró ese número de referencia.", parent=self)
 
-
-        def actualizar_dias_hasta(event):
-            mes = meses.current() + 1
-            year = int(anio.get())
-            dias = [str(i) for i in range(1, calendar.monthrange(year, mes)[1] + 1)]
-            dias_hasta.config(values=dias)
-            dias_hasta.set("Día")
-
-        #HASTA
-        etiqueta_hasta = tk.Label(self, text="Hasta: ", font=("Arial", 14, "bold"), width=10, height=2)
-        canvas.create_window(500, 100, window=etiqueta_hasta)
-        #CALENDARIO HASTA
-        anio_hasta = ttk.Combobox(self, values=[str(y) for y in range(2020, 2031)], width=6)
-        anio_hasta.set("2025")
-        canvas.create_window(480, 150, window=anio_hasta)
-        meses_hasta = ttk.Combobox(self, values=list(calendar.month_name[1:]), width=10)
-        meses_hasta.set("Mes")
-        meses_hasta.bind("<<ComboboxSelected>>", actualizar_dias_hasta)
-        canvas.create_window(560, 150, window=meses_hasta)
-        dias_hasta = ttk.Combobox(self, values=[], width=5)
-        dias_hasta.set("Día")
-        canvas.create_window(635, 150, window=dias_hasta)
-
-        boton_buscar = tk.Button(self, text="BUSCAR", font=("Arial", 12, "bold"), bg="gray20", fg="white")
-        canvas.create_window(370, 200, window=boton_buscar)
-        aceptar_B = tk.Button(self, text="ACEPTAR", font=("Arial", 12, "bold"), command=self.ref_sub.volver_menu, bg="gray20", fg="white")
-        canvas.create_window(730, 575, window=aceptar_B)
+    def cobrar(self):
+        ref = self.entry_ref.get().strip()
+        monto = self.entry_monto.get().strip()
+        if not ref.isdigit() or not monto.replace(".", "").isdigit():
+            messagebox.showwarning("Datos inválidos", "Verifica el número de referencia y el monto.", parent=self)
+            return
+        monto_float = float(monto)
+        fecha = date.today().strftime("%Y-%m-%d")
+        GestorCobros.registrar_cobro(int(ref), float(monto), fecha)
+        GestorCobros.actualizar_total(int(ref), monto_float)
+        GestorCobros.actualizar_estado(int(ref), "entregado")
+        messagebox.showinfo("Cobro registrado", "El cobro fue registrado y el estado actualizado.", parent=self)
+        self.ref_sub.volver_menu()
 
 class Trabajador(tk.Frame):
     def __init__(self, master, ref_sub):

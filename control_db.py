@@ -146,6 +146,30 @@ class GestorCliente(BaseDB):
         return resultado
 
     @staticmethod
+    def buscar_por_nombre(nombre):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM clientes
+            WHERE nombre LIKE ?
+        """, (f"%{nombre}%",))
+        resultados = cursor.fetchall()
+        conn.close()
+        return resultados
+
+    @staticmethod
+    def buscar_por_telefono(celular):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM clientes
+            WHERE celular LIKE ?
+        """, (f"%{celular}%",))
+        resultados = cursor.fetchall()
+        conn.close()
+        return resultados
+
+    @staticmethod
     def existe_cliente(nit):
         return GestorCliente.buscar_por_nit(nit) is not None
 
@@ -243,12 +267,13 @@ class GestorAparatos(BaseDB):
 
 #Esta clase se encarga de registrar las entradas y salidas de los aparatos
 class Registro:
-    def __init__(self, fecha, cliente_nit, no_aparato, estado, id_trabajador):
+    def __init__(self, fecha, cliente_nit, no_aparato, estado, id_trabajador, total):
         self.fecha = fecha
         self.cliente_nit = cliente_nit
         self.no_aparato = no_aparato
         self.estado = estado
         self.id_trabajador = id_trabajador
+        self.total = total
 
 class GestorRegistros(BaseDB):
 
@@ -264,6 +289,7 @@ class GestorRegistros(BaseDB):
             cliente_nit TEXT NOT NULL,
             no_aparato INTEGER NOT NULL,
             id_trabajador INTEGER NOT NULL,
+            total REAL DEFAULT 0,
             FOREIGN KEY(cliente_nit) REFERENCES clientes(nit),
             FOREIGN KEY(no_aparato) REFERENCES aparatos(no_aparato),
             FOREIGN KEY(id_trabajador) REFERENCES usuarios(id)
@@ -276,9 +302,9 @@ class GestorRegistros(BaseDB):
         conn = BaseDB._conn()
         cursor = conn.cursor()
         cursor.execute("""  
-            INSERT INTO registros(fecha, estado, cliente_nit, no_aparato, id_trabajador)
-            VALUES (?, ?, ?, ?, ?)
-        """, (registro.fecha, registro.estado, registro.cliente_nit, registro.no_aparato, registro.id_trabajador))
+            INSERT INTO registros(fecha, estado, cliente_nit, no_aparato, id_trabajador, total)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (registro.fecha, registro.estado, registro.cliente_nit, registro.no_aparato, registro.id_trabajador, registro.total))
         conn.commit()
         conn.close()
 
@@ -312,20 +338,67 @@ class GestorRegistros(BaseDB):
         conn.close()
         return resultados
 
+    @staticmethod
+    def buscar_por_referencia(no_registro):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT r.no_registro, r.fecha, r.estado, r.cliente_nit, r.no_aparato, r.id_trabajador, r.total,
+                   c.nombre AS nombre_cliente, c.celular, c.direccion,
+                   a.marca, a.modelo, a.tipo, a.falla,
+                   u.nombre AS nombre_trabajador
+            FROM registros r
+            JOIN clientes c ON r.cliente_nit = c.nit
+            JOIN aparatos a ON r.no_aparato = a.no_aparato
+            JOIN usuarios u ON r.id_trabajador = u.id
+            WHERE r.no_registro = ?
+        """, (no_registro,))
+        resultado = cursor.fetchone()
+        conn.close()
+        return resultado
 
+class GestorCobros(BaseDB):
+    @staticmethod
+    def crear_tabla():
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS cobros(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                no_registro INTEGER NOT NULL,
+                monto REAL NOT NULL,
+                fecha TEXT NOT NULL,
+                FOREIGN KEY(no_registro) REFERENCES registros(no_registro)
+            )
+        """)
+        conn.commit()
+        conn.close()
 
+    @staticmethod
+    def registrar_cobro(no_registro, monto, fecha):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO cobros(no_registro, monto, fecha)
+            VALUES (?, ?, ?)
+        """, (no_registro, monto, fecha))
+        conn.commit()
+        conn.close()
 
+    @staticmethod
+    def actualizar_estado(no_registro, nuevo_estado):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE registros SET estado = ? WHERE no_registro = ?
+        """, (nuevo_estado, no_registro))
+        conn.commit()
+        conn.close()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    @staticmethod
+    def actualizar_total(no_registro, nuevo_total):
+        conn = BaseDB._conn()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE registros SET total = ? WHERE no_registro = ?", (nuevo_total, no_registro))
+        conn.commit()
+        conn.close()
