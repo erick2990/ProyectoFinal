@@ -11,6 +11,8 @@ from reportlab.pdfgen import canvas as pdf_canvas
 import os
 
 fecha = date.today()
+RUTA_BASE = os.path.dirname(os.path.abspath(__file__))
+
 
 
 def aplicar_logo(canvas, ruta_logo):
@@ -29,16 +31,18 @@ class Login:
         self.root.geometry("800x600") #Se creo la ventana root
         canvas = tk.Canvas(self.root, width=800, height=600, highlightthickness=0) #Se añade un canva a la ventana root
         canvas.pack(fill="both", expand=True) #Se coloca
-        fondo = Image.open("/home/erick/Documentos/ProyectoFinal/util/fondo.png") #abrir fondo
-        fondo = fondo.resize((800, 600))
+
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        fondo = Image.open(ruta_fondo).resize((800, 600))
         fondo_tk = ImageTk.PhotoImage(fondo)
         canvas.create_image(0, 0, anchor="nw", image=fondo_tk)
-        canvas.fondo_img = fondo_tk #colocar fondo
-        logotipo = Image.open("/home/erick/Documentos/ProyectoFinal/util/Logotipo.png").convert("RGBA") #abrir logo
-        logotipo = logotipo.resize((350, 350))
+        canvas.fondo_img = fondo_tk
+
+        ruta_logo = os.path.join(RUTA_BASE, "util", "Logotipo.png")
+        logotipo = Image.open(ruta_logo).convert("RGBA").resize((350, 350))
         logo_tk = ImageTk.PhotoImage(logotipo)
         canvas.create_image(250, 250, anchor="center", image=logo_tk)
-        canvas.logo_img = logo_tk #colocar logo
+        canvas.logo_img = logo_tk
         #Texto
         canvas.create_text(600, 150, text="Inicio de sesión", font=("Arial", 14, "bold"), fill="white")
         canvas.create_text(530, 200, text="Usuario: ", font=("Arial", 14, "italic"), fill="white")
@@ -101,7 +105,10 @@ class Maestra:
         self.ventana_maestra.geometry("800x600")
         self.canvas = tk.Canvas(self.ventana_maestra, width=800, height=600)
         self.canvas.pack(fill="both", expand=True)
-        aplicar_logo(self.canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(self.canvas, ruta_fondo)
+
         self.contenido = tk.Frame(self.ventana_maestra, width=800, height=600)
         self.contenido.pack_forget()  # ocultar al inicio
 
@@ -181,7 +188,8 @@ class SubTrabajador:
         self.sub.geometry("800x600")
         self.canvas  = tk.Canvas(self.sub, width=800, height=600)
         self.canvas.pack(fill="both", expand=True)
-        aplicar_logo(self.canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(self.canvas, ruta_fondo)
         self.contenido = tk.Frame(self.sub, width=800, height=600)
         self.contenido.pack_forget() #ocultar al inicio
 
@@ -251,7 +259,9 @@ class SubAdmin:
         self.sub.geometry("800x600")
         self.canvas = tk.Canvas(self.sub, width=800, height=600)
         self.canvas.pack(fill="both", expand=True)
-        aplicar_logo(self.canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(self.canvas, ruta_fondo)
+
         self.contenido = tk.Frame(self.sub, width=800, height=600)
         self.contenido.pack_forget()
 
@@ -325,8 +335,8 @@ class AgregarAparato(tk.Frame):
 
             canvas = tk.Canvas(self, width=800, height=600)
             canvas.pack(fill="both", expand=True)
-            aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
-
+            ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+            aplicar_logo(canvas, ruta_fondo)
 
             canvas.create_text(350, 50, text="AGREGAR APARATO", font=("Arial", 14, "italic"))
             canvas.create_text(100, 100, text="DATOS CLIENTE:", font=("Arial", 14, "bold"))
@@ -465,7 +475,9 @@ class Cotizacion(tk.Frame):
         self.pack_propagate(False)
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(canvas, ruta_fondo)
+
         titulo = tk.Label(self, text="COTIZACIÓN DE APARATO", font=("Arial", 14, "italic"), width=24, height=2)
         canvas.create_window(350, 50, window=titulo)
         dato_etiqueta = tk.Label(self, text="DATOS CLIENTE: ", font=("Arial", 14, "bold"), width=20, height=2)
@@ -561,7 +573,8 @@ class BuscarHistorial(tk.Frame):
         self.pack_propagate(False)
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(canvas, ruta_fondo)
         titulo = tk.Label(self, text="BÚSQUEDA POR NO. DE REFERENCIA:",font=("Arial", 14, "italic"),  width=50, height=2)
         canvas.create_window(400, 100, window=titulo)
         self.referencia = tk.Entry(self, font=("Arial", 12, "bold"))
@@ -632,7 +645,8 @@ class Bodega(tk.Frame):
 
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(canvas, ruta_fondo)
 
         canvas.create_text(400, 50, text="BODEGA DE APARATOS", font=("Arial", 14, "italic"))
 
@@ -713,7 +727,9 @@ class Clientes(tk.Frame):
         self.pack_propagate(False)
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(canvas, ruta_fondo)
+
         #buscar por nombre, nit o telefono
         titulo = tk.Label(self, text="BUSCAR CLIENTES: ", font=("Arial", 14, "italic"), width=50, height=2)
         canvas.create_window(400, 50, window=titulo)
@@ -770,7 +786,9 @@ class Cobro(tk.Frame):
         self.pack_propagate(False)
         canvas = tk.Canvas(self, width=800, height=600)
         canvas.pack(fill="both", expand=True)
-        aplicar_logo(canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(canvas, ruta_fondo)
+
         canvas.create_text(400, 50, text="REALIZAR COBRO", font=("Arial", 14, "italic"))
         canvas.create_text(100, 120, text="Referencia:", font=("Arial", 12, "bold"), fill="white")
         self.entry_ref = tk.Entry(self, font=("Arial", 12), width=20)
@@ -826,7 +844,8 @@ class Trabajador(tk.Frame):
         self.pack_propagate(False)
         self.canvas = tk.Canvas(self, width=800, height=600)
         self.canvas.pack(fill="both", expand=True)
-        aplicar_logo(self.canvas, "/home/erick/Documentos/ProyectoFinal/util/fondo.png")
+        ruta_fondo = os.path.join(RUTA_BASE, "util", "fondo.png")
+        aplicar_logo(self.canvas, ruta_fondo)
         titulo = tk.Label(self, text="TRABAJADOR: ", font=("Arial", 14, "italic"), width=50, height=2)
         self.canvas.create_window(400, 50, window=titulo)
 
